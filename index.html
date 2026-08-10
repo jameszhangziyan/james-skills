@@ -1301,32 +1301,58 @@
     ctx.fillRect(cx - s * 0.10, s * 0.88, s * 0.20, s * 0.025);
   }
 
-  // Human brain — bilateral SDF with two lobes, central sulcus, multi-freq folds
+  // Human brain — side profile (face left): cerebrum dome with gyri,
+  // frontal/temporal lobes, cerebellum tucked at rear, short brainstem.
+  // Built as a union of ellipses + one tapered capsule (ImageData mask).
   function drawBrain(ctx, s) {
     const w = s, h = s;
     const img = ctx.createImageData(w, h);
     const d = img.data;
+
+    function ell(nx, ny, cx, cy, rx, ry, bumps, freq, fade) {
+      const dx = (nx - cx) / rx;
+      const dy = (ny - cy) / ry;
+      const dist = Math.hypot(dx, dy);
+      let r = 1.0;
+      if (bumps) {
+        const ang = Math.atan2(dy, dx);
+        let f = 1.0;
+        if (fade) f = Math.max(0, Math.min(1, fade(dy)));
+        r += bumps * Math.sin(ang * freq) * f;
+      }
+      return dist < r;
+    }
+
+    function capsule(nx, ny, ax, ay, bx, by, ra, rb) {
+      const vx = bx - ax, vy = by - ay;
+      const L2 = vx * vx + vy * vy;
+      let t = ((nx - ax) * vx + (ny - ay) * vy) / L2;
+      t = Math.max(0, Math.min(1, t));
+      const cx = ax + vx * t, cy = ay + vy * t;
+      const r = ra + (rb - ra) * t;
+      return Math.hypot(nx - cx, ny - cy) < r;
+    }
+
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const nx = (x / w) * 2 - 1;
-        const ny = -((y / h) * 2 - 1);
+        const ny = (y / h) * 2 - 1; // y-down canvas space
 
-        const nyS = ny * 1.15;
-        const r = Math.sqrt(nx * nx + nyS * nyS);
-        const a = Math.atan2(ny, nx);
+        const hit =
+          // cerebrum dome — gyri bumps only on the crown
+          ell(nx, ny, -0.10, -0.36, 0.78, 0.54, 0.05, 15, (dy) => (-dy + 0.15) / 0.6) ||
+          // frontal lobe (front-bottom roundness)
+          ell(nx, ny, -0.56, -0.18, 0.30, 0.28, 0, 0, null) ||
+          // temporal lobe (lower-front bulge)
+          ell(nx, ny, -0.26, 0.04, 0.42, 0.20, 0, 0, null) ||
+          // occipital rear fill (bridges dome to cerebellum)
+          ell(nx, ny, 0.42, -0.16, 0.30, 0.30, 0, 0, null) ||
+          // cerebellum (dense fine ridges)
+          ell(nx, ny, 0.44, 0.30, 0.27, 0.23, 0.03, 22, null) ||
+          // brainstem (short tapered stalk)
+          capsule(nx, ny, 0.06, 0.0, 0.14, 0.42, 0.095, 0.05);
 
-        const leftLobe  = Math.exp(-((nx + 0.35) ** 2) * 6)  * 0.10;
-        const rightLobe = Math.exp(-((nx - 0.35) ** 2) * 6)  * 0.10;
-        const centralSulcus = Math.exp(-nx * nx * 35) * 0.10;
-
-        const sulci1 = Math.sin(a * 7)  * 0.04;
-        const sulci2 = Math.sin(a * 11) * 0.025;
-        const sulci3 = Math.cos(a * 5 + 1) * 0.03;
-        const bumps = Math.sin(nx * 14 + ny * 9) * Math.cos(nx * 7 - ny * 11) * 0.018;
-
-        const limit = 0.72 + leftLobe + rightLobe + sulci1 + sulci2 + sulci3 - centralSulcus + bumps;
-
-        if (r < limit) {
+        if (hit) {
           const i = (y * w + x) * 4;
           d[i] = 255; d[i+1] = 255; d[i+2] = 255; d[i+3] = 255;
         }

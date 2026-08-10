@@ -1305,32 +1305,58 @@ const INDEX_HTML = `<!doctype html>
     ctx.fillRect(cx - s * 0.10, s * 0.88, s * 0.20, s * 0.025);
   }
 
-  // Human brain — bilateral SDF with two lobes, central sulcus, multi-freq folds
+  // Human brain — side profile (face left): cerebrum dome with gyri,
+  // frontal/temporal lobes, cerebellum tucked at rear, short brainstem.
+  // Built as a union of ellipses + one tapered capsule (ImageData mask).
   function drawBrain(ctx, s) {
     const w = s, h = s;
     const img = ctx.createImageData(w, h);
     const d = img.data;
+
+    function ell(nx, ny, cx, cy, rx, ry, bumps, freq, fade) {
+      const dx = (nx - cx) / rx;
+      const dy = (ny - cy) / ry;
+      const dist = Math.hypot(dx, dy);
+      let r = 1.0;
+      if (bumps) {
+        const ang = Math.atan2(dy, dx);
+        let f = 1.0;
+        if (fade) f = Math.max(0, Math.min(1, fade(dy)));
+        r += bumps * Math.sin(ang * freq) * f;
+      }
+      return dist < r;
+    }
+
+    function capsule(nx, ny, ax, ay, bx, by, ra, rb) {
+      const vx = bx - ax, vy = by - ay;
+      const L2 = vx * vx + vy * vy;
+      let t = ((nx - ax) * vx + (ny - ay) * vy) / L2;
+      t = Math.max(0, Math.min(1, t));
+      const cx = ax + vx * t, cy = ay + vy * t;
+      const r = ra + (rb - ra) * t;
+      return Math.hypot(nx - cx, ny - cy) < r;
+    }
+
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const nx = (x / w) * 2 - 1;
-        const ny = -((y / h) * 2 - 1);
+        const ny = (y / h) * 2 - 1; // y-down canvas space
 
-        const nyS = ny * 1.15;
-        const r = Math.sqrt(nx * nx + nyS * nyS);
-        const a = Math.atan2(ny, nx);
+        const hit =
+          // cerebrum dome — gyri bumps only on the crown
+          ell(nx, ny, -0.10, -0.36, 0.78, 0.54, 0.05, 15, (dy) => (-dy + 0.15) / 0.6) ||
+          // frontal lobe (front-bottom roundness)
+          ell(nx, ny, -0.56, -0.18, 0.30, 0.28, 0, 0, null) ||
+          // temporal lobe (lower-front bulge)
+          ell(nx, ny, -0.26, 0.04, 0.42, 0.20, 0, 0, null) ||
+          // occipital rear fill (bridges dome to cerebellum)
+          ell(nx, ny, 0.42, -0.16, 0.30, 0.30, 0, 0, null) ||
+          // cerebellum (dense fine ridges)
+          ell(nx, ny, 0.44, 0.30, 0.27, 0.23, 0.03, 22, null) ||
+          // brainstem (short tapered stalk)
+          capsule(nx, ny, 0.06, 0.0, 0.14, 0.42, 0.095, 0.05);
 
-        const leftLobe  = Math.exp(-((nx + 0.35) ** 2) * 6)  * 0.10;
-        const rightLobe = Math.exp(-((nx - 0.35) ** 2) * 6)  * 0.10;
-        const centralSulcus = Math.exp(-nx * nx * 35) * 0.10;
-
-        const sulci1 = Math.sin(a * 7)  * 0.04;
-        const sulci2 = Math.sin(a * 11) * 0.025;
-        const sulci3 = Math.cos(a * 5 + 1) * 0.03;
-        const bumps = Math.sin(nx * 14 + ny * 9) * Math.cos(nx * 7 - ny * 11) * 0.018;
-
-        const limit = 0.72 + leftLobe + rightLobe + sulci1 + sulci2 + sulci3 - centralSulcus + bumps;
-
-        if (r < limit) {
+        if (hit) {
           const i = (y * w + x) * 4;
           d[i] = 255; d[i+1] = 255; d[i+2] = 255; d[i+3] = 255;
         }
@@ -1532,6 +1558,111 @@ const INDEX_HTML = `<!doctype html>
 
       const tw = 0.6 + 0.4 * Math.sin(t * 0.9 + a.phase);
       ctx.strokeStyle = \`rgba(\${a.r|0}, \${a.g|0}, \${a.b|0}, \${(a.alpha * tw).toFixed(3)})\`;
+      strokeTri(a.x, a.y, a.size, a.rot);
+    }
+
+    // --- Shape constellation ---
+    const H_arr = homes[currentShape];
+    const ns = 0.0014;
+    const nt = t * 0.20;
+    ctx.lineWidth = 1.1;
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const h = H_arr[i];
+
+      // 1) Spring to current-shape home
+      const targetX = h.x * SHAPE_HALF + CX;
+      const targetY = h.y * SHAPE_HALF + CY;
+      p.vx += (targetX - p.x) * 0.020;
+      p.vy += (targetY - p.y) * 0.020;
+
+      // 2) Noise drift
+      p.vx += noise2D(p.x * ns + nt, p.y * ns) * 0.20;
+      p.vy += noise2D(p.y * ns + 7.3, p.x * ns - nt) * 0.20;
+
+      // 3) Mouse field
+      if (!idle && mouse.active) {
+        const mx = p.x - mouse.x;
+        const my = p.y - mouse.y;
+        const d2 = mx * mx + my * my;
+        if (d2 < MOUSE_RADIUS_SQ && d2 > 0.0001) {
+          const d = Math.sqrt(d2);
+          const f = 1 - d / MOUSE_RADIUS;
+          const f2 = f * f;
+          const invD = 1 / d;
+          p.vx += mx * invD * f2 * REPULSION_STRENGTH;
+          p.vy += my * invD * f2 * REPULSION_STRENGTH;
+          p.vx += -my * invD * f2 * SWIRL_STRENGTH;
+          p.vy +=  mx * invD * f2 * SWIRL_STRENGTH;
+          const boost = Math.min(1, f2 * 4);
+          if (boost > p.glow) p.glow = boost;
+          if (boost > p.sizeBoost) p.sizeBoost = boost;
+        }
+      }
+
+      // 4) Flash pulse on shape change
+      if (flash > 0.05) {
+        const cx = p.x - CX, cy = p.y - CY;
+        const d = Math.hypot(cx, cy) + 0.001;
+        const k = flash * 1.2;
+        p.vx += (cx / d) * k;
+        p.vy += (cy / d) * k;
+        if (flash * 0.9 > p.glow) p.glow = flash * 0.9;
+        if (flash * 0.7 > p.sizeBoost) p.sizeBoost = flash * 0.7;
+        if (flash > p.flashMix) p.flashMix = flash;
+      }
+      p.flashMix *= 0.88;
+
+      // 5) Damping
+      p.vx *= 0.86;
+      p.vy *= 0.86;
+
+      // 6) Integrate
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.rotSpeed + p.sizeBoost * 0.08;
+
+      // 7) Decay
+      p.glow *= GLOW_DECAY;
+      p.sizeBoost *= SIZE_DECAY;
+
+      // 8) Render — outlined triangle, base → saffron (glow) → white (flash)
+      const pulse = 0.7 + 0.3 * Math.sin(t * 1.4 + p.phase);
+      const a = p.alpha * pulse;
+      const glowT = p.glow;
+      let r = p.r * (1 - glowT) + 255 * glowT;
+      let g = p.g * (1 - glowT) + 184 * glowT;
+      let b = p.b * (1 - glowT) +  41 * glowT;
+      if (p.flashMix > 0.2) {
+        const ft = (p.flashMix - 0.2) / 0.8;
+        r = r * (1 - ft) + 255 * ft;
+        g = g * (1 - ft) + 255 * ft;
+        b = b * (1 - ft) + 255 * ft;
+      }
+      const s = p.baseSize * (1 + p.sizeBoost * 0.7);
+      ctx.strokeStyle = \`rgba(\${r|0}, \${g|0}, \${b|0}, \${a.toFixed(3)})\`;
+      strokeTri(p.x, p.y, s, p.rot);
+      if (p.glow > 0.25 || p.flashMix > 0.2) {
+        const ah = (p.glow * 0.22 + p.flashMix * 0.25).toFixed(3);
+        ctx.fillStyle = \`rgba(\${r|0}, \${g|0}, \${b|0}, \${ah})\`;
+        ctx.fill();
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // --- Boot ---
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
+`;
       strokeTri(a.x, a.y, a.size, a.rot);
     }
 
