@@ -185,27 +185,45 @@
     position: relative;
     aspect-ratio: 1 / 1;
     width: 100%;
-    max-width: 520px;
+    max-width: 560px;
     margin-left: auto;
+    border-radius: 24px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at center, rgba(128,82,255,0.04) 0%, transparent 60%),
+      transparent;
   }
-  .constellation svg { width: 100%; height: 100%; display: block; }
-  .star { fill: var(--color-electric-iris); transform-origin: center; animation: pulse 4s ease-in-out infinite; }
-  .star.amber { fill: var(--color-saffron-spark); }
-  .star.green { fill: var(--color-deep-verdant); }
-  .star.s2 { animation-delay: 0.4s; }
-  .star.s3 { animation-delay: 0.8s; }
-  .star.s4 { animation-delay: 1.2s; }
-  .star.s5 { animation-delay: 1.6s; }
-  .star.s6 { animation-delay: 2.0s; }
-  .star.s7 { animation-delay: 2.4s; }
-  .star.s8 { animation-delay: 2.8s; }
-  .star.s9 { animation-delay: 3.2s; }
-  .star.s10 { animation-delay: 3.6s; }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.45; transform: scale(0.85); }
-    50% { opacity: 1; transform: scale(1.1); }
+  .hero-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    touch-action: none;
   }
-  .line { stroke: var(--color-electric-iris); stroke-opacity: 0.18; stroke-width: 0.7; }
+  .constellation-label {
+    position: absolute;
+    left: 18px; bottom: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ash-gray);
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .constellation-label .lbl-mark {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-electric-iris);
+    box-shadow: 0 0 8px var(--color-electric-iris);
+    animation: lblPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes lblPulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.85); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+  }
 
   /* ---------- META BAR ---------- */
   .meta {
@@ -568,8 +586,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .star { animation: none; }
     .pill, .icon-btn, .filter, .nav-link, a { transition: none; }
+    .constellation-label .lbl-mark { animation: none; }
   }
 </style>
 </head>
@@ -633,43 +651,11 @@
     </div>
 
     <div class="constellation" aria-hidden="true">
-      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-        <!-- brain-shaped constellation, hand-tuned -->
-        <g class="lines">
-          <line class="line" x1="80"  y1="120" x2="140" y2="80"/>
-          <line class="line" x1="140" y1="80"  x2="210" y2="100"/>
-          <line class="line" x1="210" y1="100" x2="280" y2="70"/>
-          <line class="line" x1="280" y1="70"  x2="330" y2="130"/>
-          <line class="line" x1="210" y1="100" x2="230" y2="180"/>
-          <line class="line" x1="230" y1="180" x2="320" y2="200"/>
-          <line class="line" x1="80"  y1="120" x2="120" y2="200"/>
-          <line class="line" x1="120" y1="200" x2="230" y2="180"/>
-          <line class="line" x1="120" y1="200" x2="100" y2="290"/>
-          <line class="line" x1="100" y1="290" x2="200" y2="310"/>
-          <line class="line" x1="200" y1="310" x2="290" y2="300"/>
-          <line class="line" x1="290" y1="300" x2="320" y2="200"/>
-          <line class="line" x1="200" y1="310" x2="230" y2="180"/>
-          <line class="line" x1="100" y1="290" x2="80"  y2="120"/>
-          <line class="line" x1="200" y1="310" x2="220" y2="350"/>
-          <line class="line" x1="290" y1="300" x2="310" y2="350"/>
-          <line class="line" x1="220" y1="350" x2="310" y2="350"/>
-        </g>
-        <g>
-          <circle class="star"    cx="80"  cy="120" r="5"/>
-          <circle class="star s2" cx="140" cy="80"  r="4"/>
-          <circle class="star s3" cx="210" cy="100" r="5.5"/>
-          <circle class="star s4" cx="280" cy="70"  r="3.5"/>
-          <circle class="star s5 amber" cx="330" cy="130" r="4"/>
-          <circle class="star s6" cx="120" cy="200" r="4"/>
-          <circle class="star s7" cx="230" cy="180" r="6"/>
-          <circle class="star s8 amber" cx="320" cy="200" r="4"/>
-          <circle class="star s9" cx="100" cy="290" r="4.5"/>
-          <circle class="star s10" cx="200" cy="310" r="5"/>
-          <circle class="star s2 amber" cx="290" cy="300" r="3.5"/>
-          <circle class="star s4 green" cx="220" cy="350" r="3.5"/>
-          <circle class="star s7" cx="310" cy="350" r="3"/>
-        </g>
-      </svg>
+      <canvas id="heroParticles" class="hero-canvas"></canvas>
+      <div class="constellation-label" aria-hidden="true">
+        <span class="lbl-mark"></span>
+        <span class="lbl-text">~1,400 particles · 4 colors · mouse-aware</span>
+      </div>
     </div>
   </div>
 </section>
@@ -1215,5 +1201,227 @@
   })();
 </script>
 
+
+<!-- Hero particle constellation (Canvas 2D, Dala-style) -->
+<script>
+// Hero particle constellation — Canvas 2D port of the Dala-style effect.
+// ~1500 small colored particles forming a brain-shaped blob, with mouse
+// interaction (particles get pushed away from cursor) and noise-driven idle
+// motion. Pure Canvas 2D, no WebGL / Three.js dependency.
+
+(function () {
+  const canvas = document.getElementById('heroParticles');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d', { alpha: true });
+
+  // --- Palette (James Skills brand) ---
+  const PALETTE = [
+    [128, 82, 255],   // electric iris (primary)
+    [128, 82, 255],
+    [128, 82, 255],
+    [128, 82, 255],   // weighted toward violet (brand)
+    [255, 184, 41],   // saffron spark
+    [255, 184, 41],
+    [21, 132, 110],   // deep verdant
+    [255, 255, 255],  // bone white highlight
+  ];
+
+  // --- State ---
+  let W = 0, H = 0, DPR = 1, CX = 0, CY = 0, R = 200;
+  let particles = [];
+  const mouse = { x: -9999, y: -9999, px: -9999, py: -9999, vx: 0, vy: 0, active: false, lastMoveAt: -Infinity };
+  let t0 = performance.now();
+
+  // --- 2D value noise (compact, deterministic) ---
+  // Hash function
+  function hash(x, y) {
+    let h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return h - Math.floor(h);
+  }
+  function smooth(t) { return t * t * (3 - 2 * t); }
+  function noise2D(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const xf = x - xi, yf = y - yi;
+    const u = smooth(xf), v = smooth(yf);
+    const a = hash(xi, yi);
+    const b = hash(xi + 1, yi);
+    const c = hash(xi, yi + 1);
+    const d = hash(xi + 1, yi + 1);
+    return ((a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v) * 2 - 1;
+  }
+
+  // --- Brain-shaped target distribution via rejection sampling ---
+  // SDF: a slightly bilateral blob with a central ridge, like a stylized brain.
+  function brainSDF(x, y) {
+    // Normalized coords: x in [-1.1, 1.1], y in [-0.7, 0.7]
+    const r = Math.sqrt(x * x + y * y);
+    const a = Math.atan2(y, x);
+    // Wavy radius: small bumps following the angle
+    const fold = Math.sin(a * 4) * 0.08;
+    const lobe = Math.cos(a * 2) * 0.05; // two-lobe hint
+    const limit = 0.85 + fold + lobe;
+    return limit - r;
+  }
+  function genTargets(n) {
+    const pts = [];
+    let attempts = 0;
+    while (pts.length < n && attempts < n * 50) {
+      attempts++;
+      const x = (Math.random() * 2 - 1) * 1.1;
+      const y = (Math.random() * 2 - 1) * 0.7;
+      if (brainSDF(x, y) > 0) {
+        // Add internal structure: slight inward bias along fold lines
+        const fold = Math.sin(Math.atan2(y, x) * 4) * 0.05;
+        pts.push({
+          x: (x + fold) * R,
+          y: (y + fold * 0.4) * R * 0.78,
+        });
+      }
+    }
+    return pts;
+  }
+
+  // --- Particle factory ---
+  function makeParticles(targets) {
+    return targets.map((t, i) => {
+      const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+      return {
+        // Start near the target with a small random offset
+        x: t.x + (Math.random() - 0.5) * 6,
+        y: t.y + (Math.random() - 0.5) * 6,
+        vx: 0, vy: 0,
+        tx: t.x, ty: t.y,
+        // Visual props
+        size: 0.9 + Math.random() * 1.8,
+        alpha: 0.55 + Math.random() * 0.45,
+        // Color (with slight per-particle variance)
+        r: color[0] + (Math.random() - 0.5) * 30,
+        g: color[1] + (Math.random() - 0.5) * 20,
+        b: color[2] + (Math.random() - 0.5) * 30,
+        // Phase for the per-particle pulse
+        phase: Math.random() * Math.PI * 2,
+      };
+    });
+  }
+
+  // --- Resize ---
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = rect.width; H = rect.height;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    CX = W / 2; CY = H / 2;
+    R = Math.min(W, H * 1.4) * 0.42;
+    const targets = genTargets(1400);
+    particles = makeParticles(targets);
+  }
+
+  // --- Mouse tracking (canvas-local) ---
+  function onMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    mouse.px = mouse.x; mouse.py = mouse.y;
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+    mouse.vx = mouse.x - mouse.px;
+    mouse.vy = mouse.y - mouse.py;
+    mouse.active = true;
+    mouse.lastMoveAt = performance.now();
+  }
+  function onLeave() { mouse.active = false; mouse.x = -9999; mouse.y = -9999; }
+  window.addEventListener('mousemove', onMove, { passive: true });
+  window.addEventListener('mouseleave', onLeave);
+  // Touch support
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches[0]) onMove(e.touches[0]);
+  }, { passive: true });
+  canvas.addEventListener('touchend', onLeave);
+
+  // --- Animation loop ---
+  function frame(now) {
+    const t = (now - t0) * 0.001; // seconds
+    const dt = Math.min(0.05, 1 / 60);
+
+    // Soft trail effect (alpha clear, not full clear) for ghosting
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Mouse "wake up" — if not moved recently, ease out
+    const idle = (now - mouse.lastMoveAt) > 1200;
+
+    // Additive blending for a glow look
+    ctx.globalCompositeOperation = 'lighter';
+
+    const mouseR = 110; // px
+    const mouseR2 = mouseR * mouseR;
+    // Decay mouse velocity
+    mouse.vx *= 0.85; mouse.vy *= 0.85;
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+
+      // 1) Spring back to target position
+      const dx = p.tx - p.x;
+      const dy = p.ty - p.y;
+      p.vx += dx * 0.012;
+      p.vy += dy * 0.012;
+
+      // 2) Noise drift (small organic motion)
+      const ns = 0.0018;
+      const nt = t * 0.25;
+      p.vx += noise2D(p.x * ns + nt, p.y * ns) * 0.18;
+      p.vy += noise2D(p.y * ns + 7.3, p.x * ns - nt) * 0.18;
+
+      // 3) Mouse repulsion
+      if (!idle && mouse.active) {
+        const mx = p.x - mouse.x;
+        const my = p.y - mouse.y;
+        const d2 = mx * mx + my * my;
+        if (d2 < mouseR2 && d2 > 0.0001) {
+          const d = Math.sqrt(d2);
+          const f = (1 - d / mouseR);
+          const push = 0.9 * f * f;
+          p.vx += (mx / d) * push;
+          p.vy += (my / d) * push;
+          // Slight swirl (perpendicular component) for organic feel
+          p.vx += -(my / d) * push * 0.18;
+          p.vy +=  (mx / d) * push * 0.18;
+        }
+      }
+
+      // 4) Damping
+      p.vx *= 0.86;
+      p.vy *= 0.86;
+
+      // 5) Integrate
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // 6) Render
+      const pulse = 0.7 + 0.3 * Math.sin(t * 1.6 + p.phase);
+      const a = p.alpha * pulse;
+      ctx.fillStyle = `rgba(${p.r|0}, ${p.g|0}, ${p.b|0}, ${a.toFixed(3)})`;
+      // Particle is a small soft square (looks like a glowing dot)
+      const s = p.size;
+      ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+      // Extra glow dot for higher-alpha particles
+      if (a > 0.7) {
+        ctx.fillStyle = `rgba(${p.r|0}, ${p.g|0}, ${p.b|0}, ${(a*0.4).toFixed(3)})`;
+        ctx.fillRect(p.x - s, p.y - s, s*2, s*2);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // --- Boot ---
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+</script>
 </body>
 </html>
