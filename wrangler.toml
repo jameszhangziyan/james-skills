@@ -1,0 +1,9 @@
+name = "james-skills"
+main = "dist/server/index.js"
+compatibility_date = "2025-01-01"
+
+[site]
+bucket = "./public"
+
+[observability]
+enabled = true

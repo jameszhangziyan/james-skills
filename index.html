@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>James Skills — A growing constellation of Codex skills</title>
+<meta name="description" content="A growing library of Codex skills by James Zhang. Browse, copy, and install finance, design, and presentation skills on any platform." />
+<meta name="theme-color" content="#000000" />
+<meta property="og:title" content="James Skills" />
+<meta property="og:description" content="A growing library of Codex skills. Browse, copy, and install on any platform." />
+<meta property="og:type" content="website" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --color-void: #000000;
+    --color-bone-white: #ffffff;
+    --color-ash-gray: #9a9a9a;
+    --color-silver-mist: #bdbdbd;
+    --color-electric-iris: #8052ff;
+    --color-electric-iris-soft: rgba(128, 82, 255, 0.14);
+    --color-saffron-spark: #ffb829;
+    --color-deep-verdant: #15846e;
+
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --tracking-display: -0.04em;
+    --tracking-heading-lg: -0.04em;
+    --tracking-heading: -0.035em;
+    --tracking-heading-sm: -0.035em;
+
+    --page-max: 1280px;
+    --pad-x: clamp(24px, 6vw, 96px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    background: var(--color-void);
+    color: var(--color-bone-white);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    font-feature-settings: "ss01" on;
+  }
+
+  ::selection { background: var(--color-electric-iris); color: var(--color-bone-white); }
+
+  a { color: inherit; text-decoration: none; }
+
+  .wrap {
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: 0 var(--pad-x);
+  }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 22px 0;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(0,0,0,0.55);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    color: var(--color-bone-white);
+  }
+  .brand-mark {
+    width: 22px; height: 22px;
+    display: inline-block;
+    flex: 0 0 22px;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .nav-link {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    color: var(--color-ash-gray);
+    transition: color .2s ease;
+  }
+  .nav-link:hover, .nav-link.is-active { color: var(--color-bone-white); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative;
+    padding: 96px 0 120px;
+    overflow: hidden;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: clamp(24px, 6vw, 80px);
+    align-items: center;
+  }
+  .hero h1 {
+    font-size: clamp(56px, 8.2vw, 113px);
+    line-height: 1.04;
+    letter-spacing: var(--tracking-display);
+    font-weight: 400;
+    margin: 0 0 28px;
+  }
+  .hero h1 .iris { color: var(--color-electric-iris); }
+  .hero h1 .saff { color: var(--color-saffron-spark); }
+  .hero .lede {
+    font-size: 18px;
+    font-weight: 200;
+    line-height: 1.55;
+    color: var(--color-silver-mist);
+    max-width: 520px;
+    margin: 0 0 36px;
+  }
+  .hero .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--color-electric-iris);
+    color: var(--color-bone-white);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    padding: 14px 22px;
+    border-radius: 9999px;
+    border: 0;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .pill:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(128,82,255,0.35); }
+  .pill.ghost {
+    background: transparent;
+    color: var(--color-bone-white);
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .pill.ghost:hover { border-color: var(--color-bone-white); }
+
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-electric-iris);
+    margin-bottom: 28px;
+  }
+  .hero-eyebrow .dot { display: inline-block; width:6px; height:6px; border-radius: 50%; background: var(--color-electric-iris); margin-right: 10px; vertical-align: middle; box-shadow: 0 0 12px var(--color-electric-iris); }
+
+  /* Constellation mark */
+  .constellation {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: 520px;
+    margin-left: auto;
+  }
+  .constellation svg { width: 100%; height: 100%; display: block; }
+  .star { fill: var(--color-electric-iris); transform-origin: center; animation: pulse 4s ease-in-out infinite; }
+  .star.amber { fill: var(--color-saffron-spark); }
+  .star.green { fill: var(--color-deep-verdant); }
+  .star.s2 { animation-delay: 0.4s; }
+  .star.s3 { animation-delay: 0.8s; }
+  .star.s4 { animation-delay: 1.2s; }
+  .star.s5 { animation-delay: 1.6s; }
+  .star.s6 { animation-delay: 2.0s; }
+  .star.s7 { animation-delay: 2.4s; }
+  .star.s8 { animation-delay: 2.8s; }
+  .star.s9 { animation-delay: 3.2s; }
+  .star.s10 { animation-delay: 3.6s; }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.45; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  .line { stroke: var(--color-electric-iris); stroke-opacity: 0.18; stroke-width: 0.7; }
+
+  /* ---------- META BAR ---------- */
+  .meta {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 28px 0;
+  }
+  .meta-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .meta-cell .k {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ash-gray);
+    margin-bottom: 6px;
+  }
+  .meta-cell .v {
+    font-size: 27px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+  }
+  .meta-cell .v .iris { color: var(--color-electric-iris); }
+  .meta-cell .v .saff { color: var(--color-saffron-spark); }
+
+  /* ---------- SECTION HEADERS ---------- */
+  section { padding: 120px 0; }
+  .section-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: clamp(24px, 6vw, 80px);
+    margin-bottom: 72px;
+  }
+  .section-head h2 {
+    font-size: clamp(48px, 6.4vw, 78px);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-heading-lg);
+    font-weight: 400;
+    margin: 0;
+  }
+  .section-head .body-copy {
+    font-size: 18px;
+    font-weight: 200;
+    line-height: 1.55;
+    color: var(--color-silver-mist);
+    max-width: 460px;
+    align-self: end;
+  }
+  .section-head .body-copy .iris { color: var(--color-electric-iris); }
+
+  /* ---------- CATEGORY TABS ---------- */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 48px;
+  }
+  .filter {
+    background: transparent;
+    color: var(--color-silver-mist);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 9999px;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .filter:hover { color: var(--color-bone-white); border-color: rgba(255,255,255,0.28); }
+  .filter.is-active {
+    color: var(--color-bone-white);
+    background: var(--color-electric-iris);
+    border-color: var(--color-electric-iris);
+  }
+
+  /* ---------- SKILL CARDS ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .skill {
+    position: relative;
+    padding: 40px 32px 36px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    transition: background .25s ease;
+  }
+  .skill:hover { background: rgba(128,82,255,0.04); }
+  .skill:nth-child(3n) { border-right: 0; }
+  @media (max-width: 1140px) {
+    .skill:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.08); }
+    .skill:nth-child(2n) { border-right: 0; }
+  }
+  @media (max-width: 720px) {
+    .skill { border-right: 0 !important; }
+  }
+
+  .skill-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .skill-name {
+    font-size: 27px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+    margin: 0;
+  }
+  .skill-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-electric-iris);
+    border: 1px solid rgba(128,82,255,0.35);
+    border-radius: 9999px;
+    padding: 5px 10px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .skill-tag.amber { color: var(--color-saffron-spark); border-color: rgba(255,184,41,0.4); }
+  .skill-tag.green { color: var(--color-deep-verdant); border-color: rgba(21,132,110,0.5); }
+
+  .skill-desc {
+    font-size: 15px;
+    font-weight: 200;
+    line-height: 1.55;
+    color: var(--color-silver-mist);
+    margin: 0;
+    flex: 1 1 auto;
+  }
+  .skill-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .skill-author {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-ash-gray);
+  }
+  .skill-author .iris { color: var(--color-electric-iris); }
+  .skill-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--color-bone-white);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 9999px;
+    padding: 9px 16px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .icon-btn:hover { background: var(--color-electric-iris); border-color: var(--color-electric-iris); }
+  .icon-btn .arrow { display: inline-block; transition: transform .2s ease; }
+  .icon-btn:hover .arrow { transform: translateX(3px); }
+
+  /* ---------- INSTALL SECTION ---------- */
+  .install {
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .install-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(24px, 6vw, 80px);
+    align-items: start;
+  }
+  .install h2 {
+    font-size: clamp(48px, 6.4vw, 78px);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-heading-lg);
+    font-weight: 400;
+    margin: 0 0 32px;
+  }
+  .install h2 .iris { color: var(--color-electric-iris); }
+  .install p.lede {
+    font-size: 18px;
+    font-weight: 200;
+    line-height: 1.55;
+    color: var(--color-silver-mist);
+    margin: 0 0 36px;
+    max-width: 520px;
+  }
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .step .num {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-electric-iris);
+    padding-top: 4px;
+  }
+  .step h4 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .step p {
+    font-size: 14px;
+    font-weight: 200;
+    line-height: 1.5;
+    color: var(--color-ash-gray);
+    margin: 0;
+  }
+
+  .code-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 28px;
+    position: relative;
+  }
+  .code-card + .code-card { margin-top: 18px; }
+  .code-card .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ash-gray);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .code-card .label .platform { color: var(--color-electric-iris); }
+  .code-card pre {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--color-bone-white);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .code-card .copy {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--color-ash-gray);
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .code-card .copy:hover { color: var(--color-bone-white); border-color: var(--color-bone-white); }
+  .code-card .copy.copied { color: var(--color-saffron-spark); border-color: var(--color-saffron-spark); }
+  .code-card .c-comment { color: var(--color-ash-gray); }
+  .code-card .c-cmd { color: var(--color-bone-white); }
+  .code-card .c-iris { color: var(--color-electric-iris); }
+  .code-card .c-saff { color: var(--color-saffron-spark); }
+
+  /* ---------- FOOTER ---------- */
+  .foot {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 60px 0 40px;
+  }
+  .foot-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+    gap: 32px;
+    margin-bottom: 48px;
+  }
+  .foot h5 {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ash-gray);
+    margin: 0 0 18px;
+  }
+  .foot ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .foot ul a {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-bone-white);
+    transition: color .2s ease;
+  }
+  .foot ul a:hover { color: var(--color-electric-iris); }
+  .foot .tagline {
+    font-size: 14px;
+    font-weight: 200;
+    color: var(--color-ash-gray);
+    max-width: 360px;
+    line-height: 1.55;
+  }
+  .foot .tagline .iris { color: var(--color-electric-iris); }
+  .legal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--color-ash-gray);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 24px;
+  }
+  .legal .links { display: flex; gap: 18px; }
+  .legal .links a:hover { color: var(--color-bone-white); }
+
+  /* ---------- HIDDEN ---------- */
+  .hidden { display: none !important; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 960px) {
+    .hero { padding: 60px 0 80px; }
+    .hero-grid, .section-head, .install-grid { grid-template-columns: 1fr; }
+    .constellation { max-width: 360px; margin: 24px 0 0; }
+    .meta-row { grid-template-columns: repeat(2, 1fr); gap: 28px 24px; }
+    section { padding: 80px 0; }
+    .foot-row { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .nav-links { display: none; }
+    .meta-row { grid-template-columns: 1fr; }
+    .foot-row { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .star { animation: none; }
+    .pill, .icon-btn, .filter, .nav-link, a { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav" role="banner">
+  <div class="wrap nav-inner">
+    <a href="#top" class="brand" aria-label="James Skills home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="6" cy="9" r="1.6" fill="#8052ff"/>
+          <circle cx="11" cy="6" r="1.2" fill="#8052ff"/>
+          <circle cx="15" cy="10" r="1.4" fill="#8052ff"/>
+          <circle cx="18" cy="14" r="1.2" fill="#ffb829"/>
+          <circle cx="13" cy="14" r="1.6" fill="#8052ff"/>
+          <circle cx="8" cy="14" r="1.0" fill="#8052ff"/>
+          <circle cx="16" cy="18" r="1.2" fill="#15846e"/>
+          <g stroke="#8052ff" stroke-opacity="0.5" stroke-width="0.6">
+            <line x1="6" y1="9" x2="11" y2="6"/>
+            <line x1="11" y1="6" x2="15" y2="10"/>
+            <line x1="15" y1="10" x2="18" y2="14"/>
+            <line x1="13" y1="14" x2="8" y2="14"/>
+            <line x1="13" y1="14" x2="16" y2="18"/>
+            <line x1="8" y1="14" x2="6" y2="9"/>
+          </g>
+        </svg>
+      </span>
+      James&nbsp;Skills
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a class="nav-link is-active" href="#skills">Skills</a>
+      <a class="nav-link" href="#install">Install</a>
+      <a class="nav-link" href="https://github.com/jameszhangziyan" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero" aria-label="Hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="hero-eyebrow"><span class="dot"></span>Constellation · v2026.08</span>
+      <h1>
+        Skills, <span class="iris">on tap.</span><br/>
+        <span class="saff">Installable</span> anywhere you work.
+      </h1>
+      <p class="lede">
+        A growing library of Codex skills for finance, design, and presentations.
+        Every skill is open-source, self-contained, and one command away from
+        running on macOS, Linux, or in the cloud.
+      </p>
+      <div class="actions">
+        <a class="pill" href="#skills">
+          Browse the 19 skills
+          <span aria-hidden="true">→</span>
+        </a>
+        <a class="pill ghost" href="#install">Install guide</a>
+      </div>
+    </div>
+
+    <div class="constellation" aria-hidden="true">
+      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <!-- brain-shaped constellation, hand-tuned -->
+        <g class="lines">
+          <line class="line" x1="80"  y1="120" x2="140" y2="80"/>
+          <line class="line" x1="140" y1="80"  x2="210" y2="100"/>
+          <line class="line" x1="210" y1="100" x2="280" y2="70"/>
+          <line class="line" x1="280" y1="70"  x2="330" y2="130"/>
+          <line class="line" x1="210" y1="100" x2="230" y2="180"/>
+          <line class="line" x1="230" y1="180" x2="320" y2="200"/>
+          <line class="line" x1="80"  y1="120" x2="120" y2="200"/>
+          <line class="line" x1="120" y1="200" x2="230" y2="180"/>
+          <line class="line" x1="120" y1="200" x2="100" y2="290"/>
+          <line class="line" x1="100" y1="290" x2="200" y2="310"/>
+          <line class="line" x1="200" y1="310" x2="290" y2="300"/>
+          <line class="line" x1="290" y1="300" x2="320" y2="200"/>
+          <line class="line" x1="200" y1="310" x2="230" y2="180"/>
+          <line class="line" x1="100" y1="290" x2="80"  y2="120"/>
+          <line class="line" x1="200" y1="310" x2="220" y2="350"/>
+          <line class="line" x1="290" y1="300" x2="310" y2="350"/>
+          <line class="line" x1="220" y1="350" x2="310" y2="350"/>
+        </g>
+        <g>
+          <circle class="star"    cx="80"  cy="120" r="5"/>
+          <circle class="star s2" cx="140" cy="80"  r="4"/>
+          <circle class="star s3" cx="210" cy="100" r="5.5"/>
+          <circle class="star s4" cx="280" cy="70"  r="3.5"/>
+          <circle class="star s5 amber" cx="330" cy="130" r="4"/>
+          <circle class="star s6" cx="120" cy="200" r="4"/>
+          <circle class="star s7" cx="230" cy="180" r="6"/>
+          <circle class="star s8 amber" cx="320" cy="200" r="4"/>
+          <circle class="star s9" cx="100" cy="290" r="4.5"/>
+          <circle class="star s10" cx="200" cy="310" r="5"/>
+          <circle class="star s2 amber" cx="290" cy="300" r="3.5"/>
+          <circle class="star s4 green" cx="220" cy="350" r="3.5"/>
+          <circle class="star s7" cx="310" cy="350" r="3"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- META -->
+<section class="meta" aria-label="Library statistics" style="padding: 28px 0;">
+  <div class="wrap">
+    <div class="meta-row">
+      <div class="meta-cell">
+        <div class="k">Skills</div>
+        <div class="v"><span class="iris">19</span> in library</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Categories</div>
+        <div class="v">Finance · Design · Decks</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Platforms</div>
+        <div class="v">macOS · Linux · <span class="saff">Cloud</span></div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">License</div>
+        <div class="v">Open source, <span class="iris">MIT</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills" aria-label="Skill library">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>The <span class="iris">constellation.</span></h2>
+      <p class="body-copy">
+        Filter by what you need today. Each card opens the source repository on
+        GitHub — clone, fork, or copy the SKILL.md straight into your
+        <span class="iris">~/.codex/skills/</span> folder.
+      </p>
+    </div>
+
+    <div class="filters" role="tablist" aria-label="Skill categories">
+      <button class="filter is-active" data-filter="all" role="tab" aria-selected="true">All · 20</button>
+      <button class="filter" data-filter="finance" role="tab" aria-selected="false">Finance · 11</button>
+      <button class="filter" data-filter="design" role="tab" aria-selected="false">Design · 6</button>
+      <button class="filter" data-filter="decks" role="tab" aria-selected="false">Decks · 2</button>
+      <button class="filter" data-filter="other" role="tab" aria-selected="false">Other · 1</button>
+    </div>
+
+    <div class="grid" id="grid">
+      <!-- finance -->
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">alphaear-news</h3>
+          <span class="skill-tag">News</span>
+        </div>
+        <p class="skill-desc">实时财经新闻与热点趋势聚合。盘前梳理、事件驱动分析、热点轮动追踪与情绪冲击扫描。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/alphaear-news</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/alphaear-news" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">alphaear-search</h3>
+          <span class="skill-tag">Search</span>
+        </div>
+        <p class="skill-desc">财经检索与本地 RAG 技能。补充新闻检索、查找公司背景、做多源交叉验证与资料回忆。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/alphaear-search</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/alphaear-search" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">alphaear-sentiment</h3>
+          <span class="skill-tag amber">Sentiment</span>
+        </div>
+        <p class="skill-desc">金融情绪打分。新闻、社媒、研报多空语气对比，辅助判断风险偏好与热点持续性。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/alphaear-sentiment</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/alphaear-sentiment" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">alphaear-stock</h3>
+          <span class="skill-tag">Ticker</span>
+        </div>
+        <p class="skill-desc">Search A-Share / HK / US tickers and retrieve historical OHLCV price data through a unified Python toolkit.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/alphaear-stock</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/alphaear-stock" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">wudao-ashare</h3>
+          <span class="skill-tag">A 股</span>
+        </div>
+        <p class="skill-desc">悟道 A 股套件总入口，路由行情、涨停、资金分析、市场情报五大子技能，应对个股估值与板块轮动。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/wudao-ashare</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/wudao-ashare" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">wudao-market</h3>
+          <span class="skill-tag">Quote</span>
+        </div>
+        <p class="skill-desc">A 股基础行情。股票搜索、日线 / 分时 / K 线、涨跌幅排行、市场概况与交易日历。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/wudao-market</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/wudao-market" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">wudao-analysis</h3>
+          <span class="skill-tag amber">Flow</span>
+        </div>
+        <p class="skill-desc">资金面深度分析。异动检测、资金流向、板块轮动、股票关联、概念排行与成分股映射。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/wudao-analysis</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/wudao-analysis" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">wudao-intel</h3>
+          <span class="skill-tag green">Intel</span>
+        </div>
+        <p class="skill-desc">盘前盘后情报。智能热榜、研报、竞价、每日简报与龙虎榜分析，事件驱动一站到底。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/wudao-intel</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/wudao-intel" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">wudao-limitup</h3>
+          <span class="skill-tag amber">Limit-up</span>
+        </div>
+        <p class="skill-desc">短线情绪生态。涨停梯队、炸板池、跌停池、封板事件流、最强风口与溢价统计。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/wudao-limitup</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/wudao-limitup" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">yfinance-data</h3>
+          <span class="skill-tag">US · Global</span>
+        </div>
+        <p class="skill-desc">Fetch financial and market data using the yfinance Python library — prices, statements, options, dividends, analysts.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/yfinance-data</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/yfinance-data" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="finance">
+        <div class="skill-head">
+          <h3 class="skill-name">a-stock-data</h3>
+          <span class="skill-tag green">Curated</span>
+        </div>
+        <p class="skill-desc">A 股全栈数据工具包 V3.2.2 — 行情 / 研报 / 信号 / 资金面 / 新闻 / 基础数据 / 公告七层数据源，自包含零外部依赖。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>simonlin1212/a-stock-data</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/simonlin1212/a-stock-data" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <!-- design -->
+      <article class="skill" data-cat="design">
+        <div class="skill-head">
+          <h3 class="skill-name">baoyu-cover-image</h3>
+          <span class="skill-tag">Cover</span>
+        </div>
+        <p class="skill-desc">Generate article cover images with 5 dimensions, 11 color palettes, 7 rendering styles — cinematic, widescreen, square.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>JimLiu/baoyu-skills</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/JimLiu/baoyu-skills#baoyu-cover-image" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="design">
+        <div class="skill-head">
+          <h3 class="skill-name">baoyu-format-markdown</h3>
+          <span class="skill-tag">Markdown</span>
+        </div>
+        <p class="skill-desc">Format plain text or markdown with frontmatter, titles, summaries, headings, bold, lists and code blocks. Beautify any article.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>JimLiu/baoyu-skills</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/JimLiu/baoyu-skills#baoyu-format-markdown" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="design">
+        <div class="skill-head">
+          <h3 class="skill-name">baoyu-infographic</h3>
+          <span class="skill-tag amber">Infographic</span>
+        </div>
+        <p class="skill-desc">Professional infographics with 21 layout types and 22 visual styles. Analyzes content and recommends layout×style combos.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>JimLiu/baoyu-skills</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/JimLiu/baoyu-skills#baoyu-infographic" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="design">
+        <div class="skill-head">
+          <h3 class="skill-name">baoyu-xhs-images</h3>
+          <span class="skill-tag">XHS</span>
+        </div>
+        <p class="skill-desc">Image-card series with 12 visual styles, 8 layouts, 3 palettes. Built for 小红书 / 微信 / 视频号 social engagement.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>JimLiu/baoyu-skills</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/JimLiu/baoyu-skills#baoyu-xhs-images" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="design">
+        <div class="skill-head">
+          <h3 class="skill-name">hatch-pet</h3>
+          <span class="skill-tag green">Pet</span>
+        </div>
+        <p class="skill-desc">Create, repair, validate, QA, and package Codex-compatible animated pets — full 8×9 sprite atlas with transparent padding.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/hatch-pet</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/hatch-pet" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="design">
+        <div class="skill-head">
+          <h3 class="skill-name">huashu-design</h3>
+          <span class="skill-tag amber">Design OS</span>
+        </div>
+        <p class="skill-desc">HTML 高保真原型 / 幻灯片 / 动画 / 可视化专家。三个方向初稿，指定风格也得先选，质感到位才执行。</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>alchaincyf/huashu-design</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/alchaincyf/huashu-design" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <!-- decks -->
+      <article class="skill" data-cat="decks">
+        <div class="skill-head">
+          <h3 class="skill-name">keynote-ppt</h3>
+          <span class="skill-tag">Keynote</span>
+        </div>
+        <p class="skill-desc">High-impact keynotes in three styles — SpaceX industrial roadshow, NVIDIA cinematic, McKinsey analytical. Native PPTX output.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/keynote-ppt</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/keynote-ppt" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="skill" data-cat="decks">
+        <div class="skill-head">
+          <h3 class="skill-name">ppt-master</h3>
+          <span class="skill-tag amber">PPTX</span>
+        </div>
+        <p class="skill-desc">AI-driven PPTX workflow — editable decks, reusable Brand / Layout / Deck workspaces, template filling, and finishing.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>hugohe3/ppt-master</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/hugohe3/ppt-master" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+
+      <!-- other -->
+      <article class="skill" data-cat="other">
+        <div class="skill-head">
+          <h3 class="skill-name">finance-market-analysis</h3>
+          <span class="skill-tag">Workbench</span>
+        </div>
+        <p class="skill-desc">Market-analysis workbench scaffold. Reserved slot — drop a SKILL.md to activate the constellation entry here.</p>
+        <div class="skill-meta">
+          <span class="skill-author"><span class="iris">@</span>jameszhangziyan/finance-market-analysis</span>
+          <div class="skill-actions">
+            <a class="icon-btn" href="https://github.com/jameszhangziyan/finance-market-analysis" target="_blank" rel="noopener">Download <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section class="install" id="install" aria-label="Install guide">
+  <div class="wrap install-grid">
+    <div>
+      <h2>Install in <span class="iris">three moves.</span></h2>
+      <p class="lede">
+        Pick a platform, copy the command, and any skill drops straight into
+        your local Codex skills folder. No accounts, no keys, no waiting.
+      </p>
+      <ol class="steps">
+        <li class="step">
+          <span class="num">01</span>
+          <div>
+            <h4>Clone the repo</h4>
+            <p>Pick any skill card and copy its GitHub URL — every card links to the upstream source.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="num">02</span>
+          <div>
+            <h4>Drop into <code>~/.codex/skills/</code></h4>
+            <p>Each skill ships as a self-contained folder with a <code>SKILL.md</code> at its root.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="num">03</span>
+          <div>
+            <h4>Restart Codex</h4>
+            <p>Skills become available in the same conversation. No rebuild, no deploy step.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div>
+      <div class="code-card">
+        <div class="label">
+          <span><span class="platform">macOS</span> · zsh</span>
+          <button class="copy" data-copy="mac">Copy</button>
+        </div>
+<pre><span class="c-comment"># pick any skill from the list above</span>
+<span class="c-cmd">git </span><span class="c-iris">clone</span> <span class="c-saff">https://github.com/jameszhangziyan/alphaear-news.git</span> \
+  <span class="c-cmd">~/</span>.codex/skills/alphaear-news
+
+<span class="c-comment"># restart Codex and the skill shows up automatically</span></pre>
+      </div>
+
+      <div class="code-card">
+        <div class="label">
+          <span><span class="platform">Linux</span> · bash</span>
+          <button class="copy" data-copy="linux">Copy</button>
+        </div>
+<pre><span class="c-comment"># same command, Linux path layout</span>
+<span class="c-cmd">git </span><span class="c-iris">clone</span> <span class="c-saff">https://github.com/jameszhangziyan/wudao-ashare.git</span> \
+  <span class="c-cmd">~/</span>.codex/skills/wudao-ashare</pre>
+      </div>
+
+      <div class="code-card">
+        <div class="label">
+          <span><span class="platform">Cloud</span> · remote Codex runtime</span>
+          <button class="copy" data-copy="cloud">Copy</button>
+        </div>
+<pre><span class="c-comment"># inside a cloud Codex session, paste the URL</span>
+<span class="c-cmd">$</span><span class="c-iris">/skill-install</span> <span class="c-saff">https://github.com/jameszhangziyan/baoyu-infographic</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- FOOTER -->
+<footer class="foot" role="contentinfo">
+  <div class="wrap">
+    <div class="foot-row">
+      <div>
+        <a class="brand" href="#top" style="margin-bottom: 16px;">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="6" cy="9" r="1.6" fill="#8052ff"/>
+              <circle cx="11" cy="6" r="1.2" fill="#8052ff"/>
+              <circle cx="15" cy="10" r="1.4" fill="#8052ff"/>
+              <circle cx="18" cy="14" r="1.2" fill="#ffb829"/>
+              <circle cx="13" cy="14" r="1.6" fill="#8052ff"/>
+              <circle cx="8" cy="14" r="1.0" fill="#8052ff"/>
+              <circle cx="16" cy="18" r="1.2" fill="#15846e"/>
+              <g stroke="#8052ff" stroke-opacity="0.5" stroke-width="0.6">
+                <line x1="6" y1="9" x2="11" y2="6"/>
+                <line x1="11" y1="6" x2="15" y2="10"/>
+                <line x1="15" y1="10" x2="18" y2="14"/>
+                <line x1="13" y1="14" x2="8" y2="14"/>
+                <line x1="13" y1="14" x2="16" y2="18"/>
+                <line x1="8" y1="14" x2="6" y2="9"/>
+              </g>
+            </svg>
+          </span>
+          James&nbsp;Skills
+        </a>
+        <p class="tagline">
+          Built and curated by <span class="iris">James Zhang</span>. Each
+          skill is open source, self-contained, and made to be forked.
+        </p>
+      </div>
+
+      <div>
+        <h5>Library</h5>
+        <ul>
+          <li><a href="#skills">All skills</a></li>
+          <li><a href="#skills" data-jump="finance">Finance</a></li>
+          <li><a href="#skills" data-jump="design">Design</a></li>
+          <li><a href="#skills" data-jump="decks">Decks</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h5>Get started</h5>
+        <ul>
+          <li><a href="#install">Install guide</a></li>
+          <li><a href="https://github.com/jameszhangziyan" target="_blank" rel="noopener">GitHub profile</a></li>
+          <li><a href="https://github.com/jameszhangziyan?tab=repositories" target="_blank" rel="noopener">All repositories</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:james.zhangziyan@gmail.com">james.zhangziyan@gmail.com</a></li>
+          <li><a href="https://github.com/jameszhangziyan" target="_blank" rel="noopener">@jameszhangziyan</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="legal">
+      <span>© 2026 James Zhang · Constellation built in pure HTML, hosted on Codex Sites.</span>
+      <span class="links">
+        <a href="#top">Top ↑</a>
+        <a href="https://github.com/jameszhangziyan" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:james.zhangziyan@gmail.com">Email</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // category filter
+  (function () {
+    const buttons = document.querySelectorAll('.filter');
+    const cards = document.querySelectorAll('#grid .skill');
+    const counters = {
+      all: cards.length,
+      finance: document.querySelectorAll('#grid .skill[data-cat="finance"]').length,
+      design: document.querySelectorAll('#grid .skill[data-cat="design"]').length,
+      decks: document.querySelectorAll('#grid .skill[data-cat="decks"]').length,
+      other: document.querySelectorAll('#grid .skill[data-cat="other"]').length,
+    };
+    const labels = { all:'All', finance:'Finance', design:'Design', decks:'Decks', other:'Other' };
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.dataset.filter;
+        buttons.forEach(b => { b.classList.remove('is-active'); b.setAttribute('aria-selected', 'false'); });
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-selected', 'true');
+        cards.forEach(card => {
+          if (cat === 'all' || card.dataset.cat === cat) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // footer deep links → filter
+    document.querySelectorAll('a[data-jump]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const cat = a.dataset.jump;
+        const target = document.querySelector('.filter[data-filter="' + cat + '"]');
+        if (target) target.click();
+        document.getElementById('skills').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // copy buttons
+    const COPY_TEXT = {
+      mac: "git clone https://github.com/jameszhangziyan/alphaear-news.git \\\n  ~/.codex/skills/alphaear-news",
+      linux: "git clone https://github.com/jameszhangziyan/wudao-ashare.git \\\n  ~/.codex/skills/wudao-ashare",
+      cloud: "/skill-install https://github.com/jameszhangziyan/baoyu-infographic",
+    };
+    document.querySelectorAll('.code-card .copy').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key = btn.dataset.copy;
+        const text = COPY_TEXT[key] || '';
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (_) {}
+          ta.remove();
+        }
+        const orig = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1400);
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

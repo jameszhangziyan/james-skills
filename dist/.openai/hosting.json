@@ -1,0 +1,16 @@
+{
+  "d1": null,
+  "r2": null,
+  "staticAssets": [
+    {
+      "path": "/favicon.svg",
+      "contentType": "image/svg+xml",
+      "servedFrom": "worker-inline"
+    },
+    {
+      "path": "/",
+      "contentType": "text/html",
+      "servedFrom": "worker-inline"
+    }
+  ]
+}

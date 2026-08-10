@@ -1,0 +1,35 @@
+# OS
+.DS_Store
+
+# Logs
+*.log
+.wrangler/
+.pnpm-store/
+
+# Next.js / vinext starter — superseded by the static site
+node_modules/
+.next/
+.vite/
+dist-cache/
+
+# Unused starter files (kept on disk for reference, excluded from git)
+app/
+build/
+db/
+drizzle/
+drizzle.config.ts
+eslint.config.mjs
+examples/
+next-env.d.ts
+next.config.ts
+package-lock.json
+package.json
+postcss.config.mjs
+public/favicon.ico
+public/file.svg
+public/globe.svg
+public/window.svg
+tests/
+tsconfig.json
+vite.config.ts
+worker/
