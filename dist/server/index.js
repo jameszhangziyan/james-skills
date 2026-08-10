@@ -1236,13 +1236,15 @@ const INDEX_HTML = `<!doctype html>
 </script>
 
 
-<!-- Hero particle constellation (Canvas 2D, morphing shapes) -->
+<!-- Hero particle constellation (Canvas 2D, discrete shape switch) -->
 <script>
 // Full-page background particle constellation — Canvas 2D.
-// Three morphing target shapes (J / lightbulb / brain) selected by mouse X.
-// Particles densely fill a large central shape that takes ~70% of the
-// viewport. Mouse cursor pushes a large field (380px) of particles, and
-// displaced particles briefly glow saffron.
+// Three shapes (J / lightbulb / brain) cycle one at a time. Particles
+// re-assemble into the current shape; mouse movement accumulates "energy"
+// and every ENERGY_THRESHOLD pixels of travel triggers a switch to the
+// next shape. On each switch, a brief flash pushes every particle outward
+// and tints them saffron for ~600 ms, so the transition reads as a
+// transformation rather than a quiet lerp.
 
 (function () {
   const canvas = document.getElementById('bgParticles');
@@ -1252,16 +1254,20 @@ const INDEX_HTML = `<!doctype html>
   // --- Config ---
   const PARTICLE_TARGET = 5500;
   const MOBILE_PARTICLE_TARGET = 2400;
-  const MOUSE_RADIUS = 380;        // large influence field
+  const MOUSE_RADIUS = 380;
   const MOUSE_RADIUS_SQ = MOUSE_RADIUS * MOUSE_RADIUS;
-  const WIND_STRENGTH = 0.7;
   const REPULSION_STRENGTH = 1.6;
   const SWIRL_STRENGTH = 0.35;
   const GLOW_DECAY = 0.91;
   const SIZE_DECAY = 0.90;
-  const SHAPE_COVERAGE = 0.72;     // shape spans 72% of min(W, H)
+  const SHAPE_COVERAGE = 0.72;
 
-  // --- Palette (James Skills brand) — weighted toward violet ---
+  // Shape-switching
+  const ENERGY_PER_CHANGE = 160;   // pixels of mouse travel per shape change
+  const ENERGY_DECAY_IDLE = 0.94;  // per frame when mouse is still
+  const FLASH_DECAY = 0.93;        // per frame for transition flash
+
+  // --- Palette ---
   const PALETTE = [
     [128, 82, 255], [128, 82, 255], [128, 82, 255], [128, 82, 255], [128, 82, 255],
     [255, 184, 41], [255, 184, 41],
@@ -1272,7 +1278,10 @@ const INDEX_HTML = `<!doctype html>
   // --- State ---
   let W = 0, H = 0, DPR = 1, SHAPE_HALF = 360;
   let particles = [];
-  const homes = { j: [], bulb: [], brain: [] };
+  const homes = { 0: [], 1: [], 2: [] };   // 0=J, 1=bulb, 2=brain
+  let currentShape = 0;
+  let energy = 0;
+  let flash = 0;                  // 1.0 right after a change, decays to 0
   const mouse = {
     x: -9999, y: -9999, px: -9999, py: -9999,
     vx: 0, vy: 0, speed: 0,
@@ -1280,7 +1289,7 @@ const INDEX_HTML = `<!doctype html>
   };
   let t0 = performance.now();
 
-  // --- Noise (compact value noise) ---
+  // --- Noise ---
   function hash(x, y) {
     const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
     return h - Math.floor(h);
@@ -1295,9 +1304,7 @@ const INDEX_HTML = `<!doctype html>
     return ((a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v) * 2 - 1;
   }
 
-  // --- Shape drawing (offscreen canvases) ---
-  // Each shape is drawn into a square canvas, then we sample interior pixels.
-
+  // --- Shape drawing ---
   function makeMask(size, drawFn) {
     const c = document.createElement('canvas');
     c.width = c.height = size;
@@ -1309,38 +1316,25 @@ const INDEX_HTML = `<!doctype html>
 
   function drawJ(ctx, s) {
     // Bold J: thick vertical bar + hook at the bottom
+    const barX = s * 0.6, topY = s * 0.15, bendY = s * 0.65, t = s * 0.16;
     ctx.strokeStyle = '#fff';
-    ctx.fillStyle = '#fff';
-    const t = s * 0.16;     // stroke thickness
-    const cap = t / 2;
-    // Draw J as a stroked path
     ctx.lineWidth = t;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    // Top of the bar (right side, where J starts)
-    const barX = s * 0.6;
-    const topY = s * 0.15;
-    const bendY = s * 0.65;
     ctx.moveTo(barX, topY);
-    // Down the right side of the bar
     ctx.lineTo(barX, bendY);
-    // Hook: arc going down then around to the left
     ctx.arc(s * 0.45, bendY, s * 0.18, 0, Math.PI, false);
     ctx.stroke();
   }
 
   function drawBulb(ctx, s) {
-    // Classic incandescent bulb: round top, neck, threaded base
     ctx.fillStyle = '#fff';
     const cx = s * 0.5;
-    // Bulb (circle, slightly squashed)
     ctx.beginPath();
     ctx.ellipse(cx, s * 0.34, s * 0.30, s * 0.32, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Neck (rectangle just below bulb)
     ctx.fillRect(cx - s * 0.13, s * 0.55, s * 0.26, s * 0.10);
-    // Base (trapezoid, slightly narrower at bottom)
     ctx.beginPath();
     ctx.moveTo(cx - s * 0.13, s * 0.65);
     ctx.lineTo(cx - s * 0.18, s * 0.83);
@@ -1348,14 +1342,12 @@ const INDEX_HTML = `<!doctype html>
     ctx.lineTo(cx + s * 0.13, s * 0.65);
     ctx.closePath();
     ctx.fill();
-    // Threads (3 horizontal lines on the base)
     ctx.fillRect(cx - s * 0.15, s * 0.84, s * 0.30, s * 0.018);
     ctx.fillRect(cx - s * 0.15, s * 0.88, s * 0.30, s * 0.018);
     ctx.fillRect(cx - s * 0.13, s * 0.92, s * 0.26, s * 0.025);
   }
 
   function drawBrain(ctx, s) {
-    // Brain silhouette via the same SDF used in the hero version
     const w = s, h = s;
     const img = ctx.createImageData(w, h);
     const d = img.data;
@@ -1378,7 +1370,7 @@ const INDEX_HTML = `<!doctype html>
     ctx.putImageData(img, 0, 0);
   }
 
-  // --- Sample interior pixels of a mask in scan order ---
+  // --- Sample interior pixels ---
   function sampleMask(mask, count) {
     const { width, height } = mask;
     const ctx2 = mask.getContext('2d');
@@ -1388,20 +1380,16 @@ const INDEX_HTML = `<!doctype html>
       for (let x = 0; x < width; x++) {
         const a = data[(y * width + x) * 4 + 3];
         if (a > 128) {
-          // Normalize to [-1, 1] (canvas y is top-down, we flip)
           pts.push({ x: (x / width) * 2 - 1, y: -((y / height) * 2 - 1) });
         }
       }
     }
     if (pts.length === 0) return [];
-    // Resample to exactly \`count\` points, using deterministic stride
-    // (so particle[i] in shape A and shape B are at similar scan positions)
     const result = [];
     const step = pts.length / count;
     for (let i = 0; i < count; i++) {
       const idx = Math.floor(i * step) % pts.length;
       const p = pts[idx];
-      // Add a small per-particle jitter (deterministic via index)
       const jx = (Math.sin(i * 12.9898) * 43758.5453) % 1;
       const jy = (Math.sin(i * 78.233) * 43758.5453) % 1;
       result.push({
@@ -1425,20 +1413,12 @@ const INDEX_HTML = `<!doctype html>
     const isMobile = matchMedia('(max-width: 720px)').matches;
     const N = isMobile ? MOBILE_PARTICLE_TARGET : PARTICLE_TARGET;
 
-    // Build shape masks (in 1:1 normalized space; the mask is 512×512 for crispness)
     const maskSize = 512;
-    const jMask = makeMask(maskSize, drawJ);
-    const bulbMask = makeMask(maskSize, drawBulb);
-    const brainMask = makeMask(maskSize, drawBrain);
+    homes[0] = sampleMask(makeMask(maskSize, drawJ),     N);
+    homes[1] = sampleMask(makeMask(maskSize, drawBulb),  N);
+    homes[2] = sampleMask(makeMask(maskSize, drawBrain), N);
 
-    // Sample home positions for each shape
-    homes.j = sampleMask(jMask, N);
-    homes.bulb = sampleMask(bulbMask, N);
-    homes.brain = sampleMask(brainMask, N);
-
-    // Initial shape = J (mouse will move it)
-    const initShape = homes.j;
-    particles = initShape.map((h, i) => {
+    particles = homes[currentShape].map((h, i) => {
       const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
       const p = {
         x: h.x * SHAPE_HALF + W / 2,
@@ -1453,19 +1433,15 @@ const INDEX_HTML = `<!doctype html>
         glow: 0,
         sizeBoost: 0,
         phase: Math.random() * Math.PI * 2,
-        jx: homes.j[i].x,
-        jy: homes.j[i].y,
-        bx: homes.bulb[i].x,
-        by: homes.bulb[i].y,
-        nx: homes.brain[i].x,
-        ny: homes.brain[i].y,
+        // Per-shape home positions (normalized)
+        h0: homes[0][i], h1: homes[1][i], h2: homes[2][i],
       };
       p.baseSize = p.size;
       return p;
     });
   }
 
-  // --- Mouse tracking (window-level) ---
+  // --- Mouse tracking ---
   function onMove(e) {
     const rect = canvas.getBoundingClientRect();
     mouse.px = mouse.x; mouse.py = mouse.y;
@@ -1489,22 +1465,10 @@ const INDEX_HTML = `<!doctype html>
   canvas.addEventListener('touchmove', (e) => { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
   canvas.addEventListener('touchend', onLeave);
 
-  // --- Shape blend (mouse X position → 3-shape weights) ---
-  // Zones: 0..1/3 → J, 1/3..2/3 → lightbulb, 2/3..1 → brain
-  // Smoothstep at boundaries.
-  function shapeWeights(mouseX) {
-    if (W === 0) return { wJ: 1, wB: 0, wN: 0 };
-    const u = Math.max(0, Math.min(1, mouseX / W));
-    // Map u to a 3-zone blend using triangular basis functions
-    // Center of each zone: 1/6, 3/6, 5/6 (= 0.167, 0.5, 0.833)
-    const c1 = 1 / 6, c2 = 3 / 6, c3 = 5 / 6;
-    const halfWidth = 1 / 3;  // blend radius
-    function tri(d) { return Math.max(0, 1 - Math.abs(d) / halfWidth); }
-    let wJ = tri(u - c1);
-    let wB = tri(u - c2);
-    let wN = tri(u - c3);
-    const sum = wJ + wB + wN || 1;
-    return { wJ: wJ / sum, wB: wB / sum, wN: wN / sum };
+  // --- Shape change ---
+  function advanceShape() {
+    currentShape = (currentShape + 1) % 3;
+    flash = 1.0;
   }
 
   // --- Animation loop ---
@@ -1512,21 +1476,33 @@ const INDEX_HTML = `<!doctype html>
     const t = (now - t0) * 0.001;
     const idle = (now - mouse.lastMoveAt) > 1500;
 
-    // Soft trail for ghosting
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
-    ctx.fillRect(0, 0, W, H);
-
-    // Additive blending for glow
-    ctx.globalCompositeOperation = 'lighter';
-
-    // Shape weights from mouse
-    const { wJ, wB, wN } = shapeWeights(mouse.x);
+    // Accumulate / decay energy
+    if (!idle && mouse.active) {
+      energy += mouse.speed;
+    } else {
+      energy *= ENERGY_DECAY_IDLE;
+    }
+    // Trigger shape changes
+    let safety = 4;
+    while (energy > ENERGY_PER_CHANGE && safety-- > 0) {
+      energy -= ENERGY_PER_CHANGE;
+      advanceShape();
+    }
+    // Decay flash
+    flash *= FLASH_DECAY;
+    if (flash < 0.005) flash = 0;
 
     // Decay mouse velocity
     mouse.vx *= 0.92; mouse.vy *= 0.92;
     mouse.speed *= 0.92;
 
+    // Soft trail
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+
+    const H_arr = homes[currentShape];
     const ns = 0.0014;
     const nt = t * 0.20;
     const CX = W / 2, CY = H / 2;
@@ -1534,22 +1510,19 @@ const INDEX_HTML = `<!doctype html>
 
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
+      const h = H_arr[i];
 
-      // 1) Compute target home (3-shape blend)
-      const hx = p.jx * wJ + p.bx * wB + p.nx * wN;
-      const hy = p.jy * wJ + p.by * wB + p.ny * wN;
-      const targetX = hx * SH + CX;
-      const targetY = hy * SH + CY;
+      // 1) Spring to current-shape home
+      const targetX = h.x * SH + CX;
+      const targetY = h.y * SH + CY;
+      p.vx += (targetX - p.x) * 0.020;
+      p.vy += (targetY - p.y) * 0.020;
 
-      // 2) Spring to target
-      p.vx += (targetX - p.x) * 0.018;
-      p.vy += (targetY - p.y) * 0.018;
-
-      // 3) Noise drift
+      // 2) Noise drift
       p.vx += noise2D(p.x * ns + nt, p.y * ns) * 0.20;
       p.vy += noise2D(p.y * ns + 7.3, p.x * ns - nt) * 0.20;
 
-      // 4) Mouse field
+      // 3) Mouse field
       if (!idle && mouse.active) {
         const mx = p.x - mouse.x;
         const my = p.y - mouse.y;
@@ -1563,14 +1536,21 @@ const INDEX_HTML = `<!doctype html>
           p.vy += my * invD * f2 * REPULSION_STRENGTH;
           p.vx += -my * invD * f2 * SWIRL_STRENGTH;
           p.vy +=  mx * invD * f2 * SWIRL_STRENGTH;
-          if (mouse.speed > 0.1) {
-            p.vx += mouse.vx * f2 * WIND_STRENGTH * 0.10;
-            p.vy += mouse.vy * f2 * WIND_STRENGTH * 0.10;
-          }
           const boost = Math.min(1, f2 * 4);
           if (boost > p.glow) p.glow = boost;
           if (boost > p.sizeBoost) p.sizeBoost = boost;
         }
+      }
+
+      // 4) Flash pulse (on shape change): all particles get an outward kick
+      if (flash > 0.05) {
+        const cx = p.x - CX, cy = p.y - CY;
+        const d = Math.hypot(cx, cy) + 0.001;
+        const k = flash * 0.45;
+        p.vx += (cx / d) * k;
+        p.vy += (cy / d) * k;
+        if (flash * 0.6 > p.glow) p.glow = flash * 0.6;
+        if (flash * 0.4 > p.sizeBoost) p.sizeBoost = flash * 0.4;
       }
 
       // 5) Damping
@@ -1593,6 +1573,27 @@ const INDEX_HTML = `<!doctype html>
       const b = Math.round(p.b * (1 - p.glow) +  41 * p.glow);
       const s = p.baseSize * (1 + p.sizeBoost * 0.6);
       ctx.fillStyle = \`rgba(\${r}, \${g}, \${b}, \${a.toFixed(3)})\`;
+      ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+      if (a > 0.65 || p.glow > 0.2) {
+        const ah = (a * 0.4 + p.glow * 0.3).toFixed(3);
+        ctx.fillStyle = \`rgba(\${r}, \${g}, \${b}, \${ah})\`;
+        ctx.fillRect(p.x - s, p.y - s, s*2, s*2);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // --- Boot ---
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
+`;
       ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
       if (a > 0.65 || p.glow > 0.2) {
         const ah = (a * 0.4 + p.glow * 0.3).toFixed(3);
