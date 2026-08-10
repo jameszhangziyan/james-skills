@@ -1204,22 +1204,36 @@
 <!-- Hero particle constellation (Canvas 2D, Dala-style) -->
 <script>
 // Hero particle constellation — Canvas 2D port of the Dala-style effect.
-// ~1500 small colored particles forming a brain-shaped blob, with mouse
-// interaction (particles get pushed away from cursor) and noise-driven idle
-// motion. Pure Canvas 2D, no WebGL / Three.js dependency.
+// ~3,500 small colored particles forming a brain-shaped blob. The shape
+// is alive: it drifts with noise, gets pushed by a large mouse field
+// (repulsion + directional wind), and distorts toward the mouse's
+// velocity vector. Displaced particles briefly glow saffron and grow
+// larger. Pure Canvas 2D, no WebGL / Three.js dependency.
 
 (function () {
   const canvas = document.getElementById('heroParticles');
   if (!canvas) return;
   const ctx = canvas.getContext('2d', { alpha: true });
 
-  // --- Palette (James Skills brand) ---
+  // --- Config ---
+  const PARTICLE_TARGET = 3500;   // particle count (mobile falls back)
+  const MOBILE_PARTICLE_TARGET = 1800;
+  const MOUSE_RADIUS = 280;       // repulsion radius (px) — large, like Dala
+  const MOUSE_RADIUS_SQ = MOUSE_RADIUS * MOUSE_RADIUS;
+  const WIND_STRENGTH = 0.55;     // how much mouse velocity drags particles
+  const REPULSION_STRENGTH = 1.4; // how hard mouse pushes nearby particles
+  const SWIRL_STRENGTH = 0.30;    // tangential component for organic feel
+  const GLOW_DECAY = 0.92;        // how fast perturbed particles return to base color
+  const SIZE_DECAY = 0.90;
+
+  // --- Palette (James Skills brand) — weighted toward violet ---
   const PALETTE = [
     [128, 82, 255],   // electric iris (primary)
     [128, 82, 255],
     [128, 82, 255],
-    [128, 82, 255],   // weighted toward violet (brand)
-    [255, 184, 41],   // saffron spark
+    [128, 82, 255],
+    [128, 82, 255],   // 5x weight on violet
+    [255, 184, 41],   // saffron spark (perturbation highlight)
     [255, 184, 41],
     [21, 132, 110],   // deep verdant
     [255, 255, 255],  // bone white highlight
@@ -1228,16 +1242,23 @@
   // --- State ---
   let W = 0, H = 0, DPR = 1, CX = 0, CY = 0, R = 200;
   let particles = [];
-  const mouse = { x: -9999, y: -9999, px: -9999, py: -9999, vx: 0, vy: 0, active: false, lastMoveAt: -Infinity };
+  const mouse = {
+    x: -9999, y: -9999,       // current position (canvas-local)
+    px: -9999, py: -9999,     // previous frame position
+    vx: 0, vy: 0,              // smoothed velocity
+    speed: 0,                 // current speed magnitude
+    active: false,
+    lastMoveAt: -Infinity,
+  };
   let t0 = performance.now();
+  let frameCount = 0;
 
   // --- 2D value noise (compact, deterministic) ---
-  // Hash function
   function hash(x, y) {
-    let h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
     return h - Math.floor(h);
   }
-  function smooth(t) { return t * t * (3 - 2 * t); }
+  const smooth = (t) => t * t * (3 - 2 * t);
   function noise2D(x, y) {
     const xi = Math.floor(x), yi = Math.floor(y);
     const xf = x - xi, yf = y - yi;
@@ -1250,30 +1271,33 @@
   }
 
   // --- Brain-shaped target distribution via rejection sampling ---
-  // SDF: a slightly bilateral blob with a central ridge, like a stylized brain.
+  // A more sculpted version: two hemispheres with a central fold,
+  // surface bumps, and a hint of internal gyri.
   function brainSDF(x, y) {
-    // Normalized coords: x in [-1.1, 1.1], y in [-0.7, 0.7]
+    // x in [-1.15, 1.15], y in [-0.75, 0.75]
     const r = Math.sqrt(x * x + y * y);
     const a = Math.atan2(y, x);
-    // Wavy radius: small bumps following the angle
+    // Multi-frequency surface bumps
     const fold = Math.sin(a * 4) * 0.08;
-    const lobe = Math.cos(a * 2) * 0.05; // two-lobe hint
-    const limit = 0.85 + fold + lobe;
+    const lobe = Math.cos(a * 2) * 0.06;
+    const gyri = Math.sin(a * 7) * 0.025;
+    const limit = 0.86 + fold + lobe + gyri;
     return limit - r;
   }
   function genTargets(n) {
     const pts = [];
     let attempts = 0;
-    while (pts.length < n && attempts < n * 50) {
+    const maxAttempts = n * 60;
+    while (pts.length < n && attempts < maxAttempts) {
       attempts++;
-      const x = (Math.random() * 2 - 1) * 1.1;
-      const y = (Math.random() * 2 - 1) * 0.7;
+      const x = (Math.random() * 2 - 1) * 1.15;
+      const y = (Math.random() * 2 - 1) * 0.75;
       if (brainSDF(x, y) > 0) {
-        // Add internal structure: slight inward bias along fold lines
-        const fold = Math.sin(Math.atan2(y, x) * 4) * 0.05;
+        // Add a hint of internal structure: a central gyrus band
+        const gyrus = Math.sin(Math.atan2(y, x) * 4) * 0.04;
         pts.push({
-          x: (x + fold) * R,
-          y: (y + fold * 0.4) * R * 0.78,
+          x: (x + gyrus) * R,
+          y: (y + gyrus * 0.35) * R * 0.78,
         });
       }
     }
@@ -1282,28 +1306,28 @@
 
   // --- Particle factory ---
   function makeParticles(targets) {
-    return targets.map((t, i) => {
+    return targets.map((t) => {
       const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
       return {
-        // Start near the target with a small random offset
-        x: t.x + (Math.random() - 0.5) * 6,
-        y: t.y + (Math.random() - 0.5) * 6,
+        x: t.x + (Math.random() - 0.5) * 4,
+        y: t.y + (Math.random() - 0.5) * 4,
         vx: 0, vy: 0,
         tx: t.x, ty: t.y,
-        // Visual props
-        size: 0.9 + Math.random() * 1.8,
+        size: 0.9 + Math.random() * 1.7,
+        baseSize: 0,                 // set below
         alpha: 0.55 + Math.random() * 0.45,
-        // Color (with slight per-particle variance)
         r: color[0] + (Math.random() - 0.5) * 30,
-        g: color[1] + (Math.random() - 0.5) * 20,
+        g: color[1] + (Math.random() - 0.5) * 22,
         b: color[2] + (Math.random() - 0.5) * 30,
-        // Phase for the per-particle pulse
+        // Perturbation state (boosted when mouse is near)
+        glow: 0,                     // 0 = base color, 1 = full saffron
+        sizeBoost: 0,                // 0 = base size, 1 = +50%
         phase: Math.random() * Math.PI * 2,
       };
-    });
+    }).map((p) => { p.baseSize = p.size; return p; });
   }
 
-  // --- Resize ---
+  // --- Resize / boot ---
   function resize() {
     const rect = canvas.getBoundingClientRect();
     DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -1313,80 +1337,94 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     CX = W / 2; CY = H / 2;
     R = Math.min(W, H * 1.4) * 0.42;
-    const targets = genTargets(1400);
+    // Pick count based on device
+    const isMobile = matchMedia('(max-width: 720px)').matches;
+    const count = isMobile ? MOBILE_PARTICLE_TARGET : PARTICLE_TARGET;
+    const targets = genTargets(count);
     particles = makeParticles(targets);
+    frameCount = 0;
   }
 
-  // --- Mouse tracking (canvas-local) ---
+  // --- Mouse tracking (window-level so it works even when canvas is below text) ---
   function onMove(e) {
     const rect = canvas.getBoundingClientRect();
     mouse.px = mouse.x; mouse.py = mouse.y;
-    mouse.x = e.clientX - rect.left;
-    mouse.y = e.clientY - rect.top;
-    mouse.vx = mouse.x - mouse.px;
-    mouse.vy = mouse.y - mouse.py;
+    mouse.x = (e.clientX ?? e.touches?.[0]?.clientX ?? 0) - rect.left;
+    mouse.y = (e.clientY ?? e.touches?.[0]?.clientY ?? 0) - rect.top;
+    const dx = mouse.x - mouse.px;
+    const dy = mouse.y - mouse.py;
+    // Smooth velocity (low-pass)
+    mouse.vx = mouse.vx * 0.6 + dx * 0.4;
+    mouse.vy = mouse.vy * 0.6 + dy * 0.4;
+    mouse.speed = Math.min(40, Math.hypot(mouse.vx, mouse.vy));
     mouse.active = true;
     mouse.lastMoveAt = performance.now();
   }
-  function onLeave() { mouse.active = false; mouse.x = -9999; mouse.y = -9999; }
+  function onLeave() { mouse.active = false; mouse.x = -9999; mouse.y = -9999; mouse.vx = 0; mouse.vy = 0; mouse.speed = 0; }
   window.addEventListener('mousemove', onMove, { passive: true });
   window.addEventListener('mouseleave', onLeave);
-  // Touch support
-  canvas.addEventListener('touchmove', (e) => {
-    if (e.touches[0]) onMove(e.touches[0]);
-  }, { passive: true });
+  canvas.addEventListener('touchmove', (e) => { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
   canvas.addEventListener('touchend', onLeave);
 
   // --- Animation loop ---
   function frame(now) {
-    const t = (now - t0) * 0.001; // seconds
-    const dt = Math.min(0.05, 1 / 60);
+    const t = (now - t0) * 0.001;     // seconds
+    const idle = (now - mouse.lastMoveAt) > 1500;
+    frameCount++;
 
-    // Soft trail effect (alpha clear, not full clear) for ghosting
+    // Soft trail effect for ghosting
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
     ctx.fillRect(0, 0, W, H);
 
-    // Mouse "wake up" — if not moved recently, ease out
-    const idle = (now - mouse.lastMoveAt) > 1200;
-
-    // Additive blending for a glow look
+    // Additive blending for glow
     ctx.globalCompositeOperation = 'lighter';
 
-    const mouseR = 110; // px
-    const mouseR2 = mouseR * mouseR;
-    // Decay mouse velocity
-    mouse.vx *= 0.85; mouse.vy *= 0.85;
+    // Decay mouse velocity slightly so the wind doesn't persist forever
+    mouse.vx *= 0.92; mouse.vy *= 0.92;
+    mouse.speed *= 0.92;
+
+    const ns = 0.0018;
+    const nt = t * 0.22;
 
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
 
       // 1) Spring back to target position
-      const dx = p.tx - p.x;
-      const dy = p.ty - p.y;
-      p.vx += dx * 0.012;
-      p.vy += dy * 0.012;
+      const dxT = p.tx - p.x;
+      const dyT = p.ty - p.y;
+      p.vx += dxT * 0.014;
+      p.vy += dyT * 0.014;
 
-      // 2) Noise drift (small organic motion)
-      const ns = 0.0018;
-      const nt = t * 0.25;
-      p.vx += noise2D(p.x * ns + nt, p.y * ns) * 0.18;
-      p.vy += noise2D(p.y * ns + 7.3, p.x * ns - nt) * 0.18;
+      // 2) Noise drift (organic idle motion)
+      p.vx += noise2D(p.x * ns + nt, p.y * ns) * 0.22;
+      p.vy += noise2D(p.y * ns + 7.3, p.x * ns - nt) * 0.22;
 
-      // 3) Mouse repulsion
+      // 3) Mouse field (only when active and not idle)
       if (!idle && mouse.active) {
         const mx = p.x - mouse.x;
         const my = p.y - mouse.y;
         const d2 = mx * mx + my * my;
-        if (d2 < mouseR2 && d2 > 0.0001) {
+        if (d2 < MOUSE_RADIUS_SQ && d2 > 0.0001) {
           const d = Math.sqrt(d2);
-          const f = (1 - d / mouseR);
-          const push = 0.9 * f * f;
-          p.vx += (mx / d) * push;
-          p.vy += (my / d) * push;
-          // Slight swirl (perpendicular component) for organic feel
-          p.vx += -(my / d) * push * 0.18;
-          p.vy +=  (mx / d) * push * 0.18;
+          const f = 1 - d / MOUSE_RADIUS;            // 0..1
+          const f2 = f * f;                          // smoother falloff
+          const invD = 1 / d;
+          // Repulsion (push radially outward)
+          p.vx += mx * invD * f2 * REPULSION_STRENGTH;
+          p.vy += my * invD * f2 * REPULSION_STRENGTH;
+          // Swirl (tangential rotation)
+          p.vx += -my * invD * f2 * SWIRL_STRENGTH;
+          p.vy +=  mx * invD * f2 * SWIRL_STRENGTH;
+          // Wind (drag in mouse velocity direction)
+          if (mouse.speed > 0.1) {
+            p.vx += mouse.vx * f2 * WIND_STRENGTH * 0.12;
+            p.vy += mouse.vy * f2 * WIND_STRENGTH * 0.12;
+          }
+          // Glow boost (particles turn warm where disturbed)
+          const boost = Math.min(1, f2 * 4);
+          if (boost > p.glow) p.glow = boost;
+          if (boost > p.sizeBoost) p.sizeBoost = boost;
         }
       }
 
@@ -1398,16 +1436,25 @@
       p.x += p.vx;
       p.y += p.vy;
 
-      // 6) Render
-      const pulse = 0.7 + 0.3 * Math.sin(t * 1.6 + p.phase);
+      // 6) Decay glow / size boost
+      p.glow *= GLOW_DECAY;
+      p.sizeBoost *= SIZE_DECAY;
+
+      // 7) Render
+      const pulse = 0.7 + 0.3 * Math.sin(t * 1.5 + p.phase);
       const a = p.alpha * pulse;
-      ctx.fillStyle = `rgba(${p.r|0}, ${p.g|0}, ${p.b|0}, ${a.toFixed(3)})`;
-      // Particle is a small soft square (looks like a glowing dot)
-      const s = p.size;
+      // Color: lerp from base to saffron as glow rises
+      const r = Math.round(p.r * (1 - p.glow) + 255 * p.glow);
+      const g = Math.round(p.g * (1 - p.glow) + 184 * p.glow);
+      const b = Math.round(p.b * (1 - p.glow) +  41 * p.glow);
+      // Size: base + boost
+      const s = p.baseSize * (1 + p.sizeBoost * 0.7);
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a.toFixed(3)})`;
       ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
-      // Extra glow dot for higher-alpha particles
-      if (a > 0.7) {
-        ctx.fillStyle = `rgba(${p.r|0}, ${p.g|0}, ${p.b|0}, ${(a*0.4).toFixed(3)})`;
+      // Bright particles get an extra glow halo
+      if (a > 0.7 || p.glow > 0.2) {
+        const ah = (a * 0.4 + p.glow * 0.3).toFixed(3);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${ah})`;
         ctx.fillRect(p.x - s, p.y - s, s*2, s*2);
       }
     }
