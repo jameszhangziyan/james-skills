@@ -27,6 +27,17 @@ const INDEX_HTML = `<!doctype html>
     --color-electric-iris-soft: rgba(128, 82, 255, 0.14);
     --color-saffron-spark: #ffb829;
     --color-deep-verdant: #15846e;
+
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --tracking-display: -0.04em;
+    --tracking-heading-lg: -0.04em;
+    --tracking-heading: -0.035em;
+    --tracking-heading-sm: -0.035em;
+
+    --page-max: 1280px;
+    --pad-x: clamp(24px, 6vw, 96px);
   }
 
   /* Full-page particle background canvas (fixed, behind content) */
@@ -1427,7 +1438,7 @@ const INDEX_HTML = `<!doctype html>
       for (let x = 0; x < width; x++) {
         const a = data[(y * width + x) * 4 + 3];
         if (a > 128) {
-          pts.push({ x: (x / width) * 2 - 1, y: -((y / height) * 2 - 1) });
+          pts.push({ x: (x / width) * 2 - 1, y: (y / height) * 2 - 1 });
         }
       }
     }
@@ -1631,6 +1642,27 @@ const INDEX_HTML = `<!doctype html>
       }
       const s = p.baseSize * (1 + p.sizeBoost * 0.7);
       ctx.fillStyle = \`rgba(\${r|0}, \${g|0}, \${b|0}, \${a.toFixed(3)})\`;
+      ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+      if (a > 0.65 || p.glow > 0.2 || p.flashMix > 0.2) {
+        const ah = (a * 0.4 + p.glow * 0.3 + p.flashMix * 0.3).toFixed(3);
+        ctx.fillStyle = \`rgba(\${r|0}, \${g|0}, \${b|0}, \${ah})\`;
+        ctx.fillRect(p.x - s, p.y - s, s*2, s*2);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // --- Boot ---
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
+`;
       ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
       if (a > 0.65 || p.glow > 0.2 || p.flashMix > 0.2) {
         const ah = (a * 0.4 + p.glow * 0.3 + p.flashMix * 0.3).toFixed(3);
