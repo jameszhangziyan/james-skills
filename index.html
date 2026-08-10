@@ -1235,12 +1235,10 @@
 <!-- Hero particle constellation (Canvas 2D, discrete shape switch) -->
 <script>
 // Full-page background particle constellation — Canvas 2D.
-// Three shapes (J / lightbulb / brain) cycle one at a time. Particles
-// re-assemble into the current shape; mouse movement accumulates "energy"
-// and every ENERGY_THRESHOLD pixels of travel triggers a switch to the
-// next shape. On each switch, a brief flash pushes every particle outward
-// and tints them saffron for ~600 ms, so the transition reads as a
-// transformation rather than a quiet lerp.
+// Three shapes (J / idea-bulb / human-brain) cycle one at a time, sitting
+// in the upper-right of the viewport. Mouse movement accumulates "energy";
+// every ENERGY_PER_CHANGE pixels of travel switches to the next shape with
+// a dramatic radial flash + saffron→white color sweep.
 
 (function () {
   const canvas = document.getElementById('bgParticles');
@@ -1256,12 +1254,9 @@
   const SWIRL_STRENGTH = 0.35;
   const GLOW_DECAY = 0.91;
   const SIZE_DECAY = 0.90;
-  const SHAPE_COVERAGE = 0.72;
-
-  // Shape-switching
-  const ENERGY_PER_CHANGE = 160;   // pixels of mouse travel per shape change
-  const ENERGY_DECAY_IDLE = 0.94;  // per frame when mouse is still
-  const FLASH_DECAY = 0.93;        // per frame for transition flash
+  const ENERGY_PER_CHANGE = 350;     // dulled: needs 350px of mouse travel
+  const ENERGY_DECAY_IDLE = 0.94;
+  const FLASH_DECAY = 0.95;          // slower decay → longer-lasting pulse
 
   // --- Palette ---
   const PALETTE = [
@@ -1272,18 +1267,27 @@
   ];
 
   // --- State ---
-  let W = 0, H = 0, DPR = 1, SHAPE_HALF = 360;
+  let W = 0, H = 0, DPR = 1;
+  let CX = 0, CY = 0, SHAPE_HALF = 360;
   let particles = [];
-  const homes = { 0: [], 1: [], 2: [] };   // 0=J, 1=bulb, 2=brain
+  const homes = { 0: [], 1: [], 2: [] };   // 0=J, 1=idea-bulb, 2=brain
   let currentShape = 0;
   let energy = 0;
-  let flash = 0;                  // 1.0 right after a change, decays to 0
+  let flash = 0;
   const mouse = {
     x: -9999, y: -9999, px: -9999, py: -9999,
     vx: 0, vy: 0, speed: 0,
     active: false, lastMoveAt: -Infinity,
   };
   let t0 = performance.now();
+
+  // --- Layout: upper-right on wide, upper-center on narrow ---
+  function computeLayout() {
+    if (W > 960) {
+      return { cx: W * 0.72, cy: H * 0.35, half: Math.min(W, H) * 0.42 };
+    }
+    return { cx: W * 0.5, cy: H * 0.34, half: Math.min(W, H) * 0.32 };
+  }
 
   // --- Noise ---
   function hash(x, y) {
@@ -1310,8 +1314,8 @@
     return c;
   }
 
+  // J — bold, with a clear hook
   function drawJ(ctx, s) {
-    // Bold J: thick vertical bar + hook at the bottom
     const barX = s * 0.6, topY = s * 0.15, bendY = s * 0.65, t = s * 0.16;
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = t;
@@ -1324,39 +1328,82 @@
     ctx.stroke();
   }
 
+  // Idea-bulb — classic round bulb + 10 idea rays around the upper hemisphere
   function drawBulb(ctx, s) {
     ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#fff';
+    ctx.lineCap = 'round';
     const cx = s * 0.5;
+    const cy = s * 0.34;
+    const br = s * 0.26;
+
+    // 10 idea rays in the upper hemisphere
+    ctx.lineWidth = s * 0.045;
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.PI + (i / 9) * Math.PI;  // 180° → 360° (upper half)
+      const r1 = br + s * 0.07;
+      const r2 = br + s * 0.16;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+      ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+      ctx.stroke();
+    }
+
+    // Bulb (round, slightly oval)
     ctx.beginPath();
-    ctx.ellipse(cx, s * 0.34, s * 0.30, s * 0.32, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, br, br * 1.05, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillRect(cx - s * 0.13, s * 0.55, s * 0.26, s * 0.10);
+
+    // Neck
+    ctx.fillRect(cx - s * 0.10, s * 0.55, s * 0.20, s * 0.07);
+
+    // Base (trapezoid)
     ctx.beginPath();
-    ctx.moveTo(cx - s * 0.13, s * 0.65);
-    ctx.lineTo(cx - s * 0.18, s * 0.83);
-    ctx.lineTo(cx + s * 0.18, s * 0.83);
-    ctx.lineTo(cx + s * 0.13, s * 0.65);
+    ctx.moveTo(cx - s * 0.10, s * 0.62);
+    ctx.lineTo(cx - s * 0.14, s * 0.78);
+    ctx.lineTo(cx + s * 0.14, s * 0.78);
+    ctx.lineTo(cx + s * 0.10, s * 0.62);
     ctx.closePath();
     ctx.fill();
-    ctx.fillRect(cx - s * 0.15, s * 0.84, s * 0.30, s * 0.018);
-    ctx.fillRect(cx - s * 0.15, s * 0.88, s * 0.30, s * 0.018);
-    ctx.fillRect(cx - s * 0.13, s * 0.92, s * 0.26, s * 0.025);
+
+    // Threads (3 horizontal lines)
+    ctx.fillRect(cx - s * 0.12, s * 0.80, s * 0.24, s * 0.018);
+    ctx.fillRect(cx - s * 0.12, s * 0.84, s * 0.24, s * 0.018);
+    ctx.fillRect(cx - s * 0.10, s * 0.88, s * 0.20, s * 0.025);
   }
 
+  // Human brain — bilateral SDF with two lobes, central sulcus, multi-freq folds
   function drawBrain(ctx, s) {
     const w = s, h = s;
     const img = ctx.createImageData(w, h);
     const d = img.data;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        const nx = (x / w) * 2 * 1.15 - 1.15;
-        const ny = -((y / h) * 2 * 0.75 - 0.75);
-        const r = Math.sqrt(nx * nx + ny * ny);
+        const nx = (x / w) * 2 - 1;
+        const ny = -((y / h) * 2 - 1);
+
+        // Brain is slightly wider than tall
+        const nyS = ny * 1.15;
+        const r = Math.sqrt(nx * nx + nyS * nyS);
         const a = Math.atan2(ny, nx);
-        const fold = Math.sin(a * 4) * 0.08;
-        const lobe = Math.cos(a * 2) * 0.06;
-        const gyri = Math.sin(a * 7) * 0.025;
-        const limit = 0.86 + fold + lobe + gyri;
+
+        // Two hemispheres (left/right lobes)
+        const leftLobe  = Math.exp(-((nx + 0.35) ** 2) * 6)  * 0.10;
+        const rightLobe = Math.exp(-((nx - 0.35) ** 2) * 6)  * 0.10;
+
+        // Central longitudinal fissure (deep groove between hemispheres)
+        const centralSulcus = Math.exp(-nx * nx * 35) * 0.10;
+
+        // Multiple-frequency sulci (folds on the surface)
+        const sulci1 = Math.sin(a * 7)  * 0.04;
+        const sulci2 = Math.sin(a * 11) * 0.025;
+        const sulci3 = Math.cos(a * 5 + 1) * 0.03;
+
+        // Bumpy gyri (small surface bumps)
+        const bumps = Math.sin(nx * 14 + ny * 9) * Math.cos(nx * 7 - ny * 11) * 0.018;
+
+        const limit = 0.72 + leftLobe + rightLobe + sulci1 + sulci2 + sulci3 - centralSulcus + bumps;
+
         if (r < limit) {
           const i = (y * w + x) * 4;
           d[i] = 255; d[i+1] = 255; d[i+2] = 255; d[i+3] = 255;
@@ -1404,12 +1451,14 @@
     canvas.width = Math.floor(W * DPR);
     canvas.height = Math.floor(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    SHAPE_HALF = Math.min(W, H) * SHAPE_COVERAGE * 0.5;
+    const layout = computeLayout();
+    CX = layout.cx; CY = layout.cy; SHAPE_HALF = layout.half;
 
     const isMobile = matchMedia('(max-width: 720px)').matches;
     const N = isMobile ? MOBILE_PARTICLE_TARGET : PARTICLE_TARGET;
 
-    const maskSize = 512;
+    // Higher mask resolution preserves detail in complex shapes (brain, rays)
+    const maskSize = 768;
     homes[0] = sampleMask(makeMask(maskSize, drawJ),     N);
     homes[1] = sampleMask(makeMask(maskSize, drawBulb),  N);
     homes[2] = sampleMask(makeMask(maskSize, drawBrain), N);
@@ -1417,8 +1466,8 @@
     particles = homes[currentShape].map((h, i) => {
       const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
       const p = {
-        x: h.x * SHAPE_HALF + W / 2,
-        y: h.y * SHAPE_HALF + H / 2,
+        x: h.x * SHAPE_HALF + CX,
+        y: h.y * SHAPE_HALF + CY,
         vx: 0, vy: 0,
         size: 1.3 + Math.random() * 1.8,
         baseSize: 0,
@@ -1428,8 +1477,8 @@
         b: color[2] + (Math.random() - 0.5) * 28,
         glow: 0,
         sizeBoost: 0,
+        flashMix: 0,
         phase: Math.random() * Math.PI * 2,
-        // Per-shape home positions (normalized)
         h0: homes[0][i], h1: homes[1][i], h2: homes[2][i],
       };
       p.baseSize = p.size;
@@ -1472,23 +1521,20 @@
     const t = (now - t0) * 0.001;
     const idle = (now - mouse.lastMoveAt) > 1500;
 
-    // Accumulate / decay energy
+    // Energy & shape change
     if (!idle && mouse.active) {
       energy += mouse.speed;
     } else {
       energy *= ENERGY_DECAY_IDLE;
     }
-    // Trigger shape changes
     let safety = 4;
     while (energy > ENERGY_PER_CHANGE && safety-- > 0) {
       energy -= ENERGY_PER_CHANGE;
       advanceShape();
     }
-    // Decay flash
     flash *= FLASH_DECAY;
     if (flash < 0.005) flash = 0;
 
-    // Decay mouse velocity
     mouse.vx *= 0.92; mouse.vy *= 0.92;
     mouse.speed *= 0.92;
 
@@ -1501,16 +1547,14 @@
     const H_arr = homes[currentShape];
     const ns = 0.0014;
     const nt = t * 0.20;
-    const CX = W / 2, CY = H / 2;
-    const SH = SHAPE_HALF;
 
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       const h = H_arr[i];
 
       // 1) Spring to current-shape home
-      const targetX = h.x * SH + CX;
-      const targetY = h.y * SH + CY;
+      const targetX = h.x * SHAPE_HALF + CX;
+      const targetY = h.y * SHAPE_HALF + CY;
       p.vx += (targetX - p.x) * 0.020;
       p.vy += (targetY - p.y) * 0.020;
 
@@ -1538,16 +1582,22 @@
         }
       }
 
-      // 4) Flash pulse (on shape change): all particles get an outward kick
+      // 4) Flash pulse on shape change — much more dramatic now
       if (flash > 0.05) {
         const cx = p.x - CX, cy = p.y - CY;
         const d = Math.hypot(cx, cy) + 0.001;
-        const k = flash * 0.45;
+        // Strong radial push
+        const k = flash * 1.2;
         p.vx += (cx / d) * k;
         p.vy += (cy / d) * k;
-        if (flash * 0.6 > p.glow) p.glow = flash * 0.6;
-        if (flash * 0.4 > p.sizeBoost) p.sizeBoost = flash * 0.4;
+        // Strong glow (saffron)
+        if (flash * 0.9 > p.glow) p.glow = flash * 0.9;
+        // Big size boost
+        if (flash * 0.7 > p.sizeBoost) p.sizeBoost = flash * 0.7;
+        // White flash (separate from glow, brief)
+        if (flash > p.flashMix) p.flashMix = flash;
       }
+      p.flashMix *= 0.88;
 
       // 5) Damping
       p.vx *= 0.86;
@@ -1564,15 +1614,23 @@
       // 8) Render
       const pulse = 0.7 + 0.3 * Math.sin(t * 1.4 + p.phase);
       const a = p.alpha * pulse;
-      const r = Math.round(p.r * (1 - p.glow) + 255 * p.glow);
-      const g = Math.round(p.g * (1 - p.glow) + 184 * p.glow);
-      const b = Math.round(p.b * (1 - p.glow) +  41 * p.glow);
-      const s = p.baseSize * (1 + p.sizeBoost * 0.6);
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a.toFixed(3)})`;
+      // Color: base → saffron (via glow) → white (via flashMix)
+      const glowT = p.glow;
+      let r = p.r * (1 - glowT) + 255 * glowT;
+      let g = p.g * (1 - glowT) + 184 * glowT;
+      let b = p.b * (1 - glowT) +  41 * glowT;
+      if (p.flashMix > 0.2) {
+        const ft = (p.flashMix - 0.2) / 0.8;
+        r = r * (1 - ft) + 255 * ft;
+        g = g * (1 - ft) + 255 * ft;
+        b = b * (1 - ft) + 255 * ft;
+      }
+      const s = p.baseSize * (1 + p.sizeBoost * 0.7);
+      ctx.fillStyle = `rgba(${r|0}, ${g|0}, ${b|0}, ${a.toFixed(3)})`;
       ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
-      if (a > 0.65 || p.glow > 0.2) {
-        const ah = (a * 0.4 + p.glow * 0.3).toFixed(3);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${ah})`;
+      if (a > 0.65 || p.glow > 0.2 || p.flashMix > 0.2) {
+        const ah = (a * 0.4 + p.glow * 0.3 + p.flashMix * 0.3).toFixed(3);
+        ctx.fillStyle = `rgba(${r|0}, ${g|0}, ${b|0}, ${ah})`;
         ctx.fillRect(p.x - s, p.y - s, s*2, s*2);
       }
     }
