@@ -20,10 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Sync Cloudflare Worker with latest index.html
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Sync Cloudflare Worker with latest index.html
         run: node scripts/rebuild-worker.mjs
 
       - name: Upload Pages artifact
